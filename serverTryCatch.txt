@@ -1,0 +1,16 @@
+	Deck=require('./deck.js')
+	process.on('message', MessageIn);
+	function updateEachUser(){
+		for(let i in playerIDs){
+			process.send(playerIDs[i],'updateUser',players[i].private)
+		}
+	}
+	function updateALLUsers(){
+		process.send('all','updatepublic',publicItems)
+	}
+	function messageOut(ID, message, color){
+	var messageObj = {
+		data: "" + message,
+		color: color
+	};
+	process.send(ID,'message',JSON.stringify(messageObj));
