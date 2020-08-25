@@ -58,39 +58,49 @@ function senderror(ID,error){
 	messageOut(ID,error,"#ff0000")
 }
 function MessageIn(message2server){
-	let playerID=message2server.ID
-	let command=message2server.command
-	let data=message2server.data
-	console.log('{rage}49',playerID,'command:',command,'data:',data);
-	let playerIndex=players.map(player=>player.ID).indexOf(playerID)
-	if(playerIndex!=-1){
-		console.log('playerIndex',playerIndex)
-		switch(command){
-			case 'addPlayer':getPrivData(players[playerIndex]); break;
-			case 'removePlayer':removePlayer(playerIndex); break;
-			case 'userName':renameUser(players[playerIndex],data)
-			case 'ready':ready(players[playerIndex]); break;
-			case 'recieveBid':recieveBid(players[playerIndex],data); break;
-			case 'cardSelected':cardSelected(players[playerIndex],data); break;
-			case 'startGame':startGame(); break;
-			case 'end':gameEnd();break;
+	if('command' in message2server){
+		let playerID=message2server.ID
+		let command=message2server.command
+		let data=message2server.data
+		console.log('{rage}49',playerID,'command:',command,'data:',data);
+		let playerIndex=players.map(player=>player.ID).indexOf(playerID)
+		if(playerIndex!=-1){
+			console.log('playerIndex',playerIndex)
+			switch(command){
+				case 'addPlayer':getPrivData(players[playerIndex]); break;
+				case 'removePlayer':removePlayer(playerIndex); break;
+				case 'userName':renameUser(players[playerIndex],data)
+				case 'ready':ready(players[playerIndex]); break;
+				case 'recieveBid':recieveBid(players[playerIndex],data); break;
+				case 'cardSelected':cardSelected(players[playerIndex],data); break;
+				case 'startGame':startGame(); break;
+				case 'end':gameEnd();break;
+			}
+		}else{
+			console.log('gameStatus',gameStatus)
+			if(command=='addPlayer' && gameStatus==gameMode['LOBBY']){
+				console.log('adding player')
+				addPlayer(playerID,data)
+			}else if(command=='end'&&gameStatus==gameMode.LOBBY){return process.exit(0)}
+			else{
+				let showBoardMessage = {
+					titleColor: spectatorColor,
+					displayTitle: (gameStatus==gameMode.LOBBY) ? "flex" : "none",
+					displayGame: (gameStatus==gameMode.LOBBY) ? "none" : "flex"
+				};
+				updateUser(playerID,"showBoard", showBoardMessage);
+				updateUser(player.ID,"trumpCard", trumpCard)
+				updateALLUsers(userList)
+				
+			}
 		}
-	}else{
-		console.log('gameStatus',gameStatus)
-		if(command=='addPlayer' && gameStatus==gameMode['LOBBY']){
-			console.log('adding player')
-			addPlayer(playerID,data)
-		}else if(command=='end'&&gameStatus==gameMode.LOBBY){return process.exit(0)}
-		else{
-			let showBoardMessage = {
-				titleColor: spectatorColor,
-				displayTitle: (gameStatus==gameMode.LOBBY) ? "flex" : "none",
-				displayGame: (gameStatus==gameMode.LOBBY) ? "none" : "flex"
-			};
-			updateUser(playerID,"showBoard", showBoardMessage);
-			updateALLUsers(userList)
+	}else if('debug' in message2server){
+		try{
+			eval("console.log("+message2server.input+")");
+		} catch (err) {
+			console.log("invalid command in pit");
 		}
-	}
+	}else{console.log('no command')}
 	//console.log('end of message in')
 }
 

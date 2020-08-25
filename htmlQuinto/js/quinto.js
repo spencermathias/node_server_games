@@ -3,7 +3,7 @@
 // put chat log behind a button for mobile; only show the last message for a second
 
 //events
-var publicAddress = Addresses.publicAddress;
+
 
 window.addEventListener('load', function() {
 	var lastTouch = {x:0, y:0};
@@ -65,7 +65,7 @@ function titleFunction(){
 }
 
 var soundsAllowed = false;
-var ding = new Audio('../sounds/echoed-ding.mp3');
+var ding = new Audio('./sounds/echoed-ding.mp3');
 function allowAudio(){
 	if (!soundsAllowed){
 		ding.load();

@@ -45,30 +45,38 @@ function senderror(ID,error){
 	messageOut(ID,error,"#ff0000")
 }
 function MessageIn(message2server){
-	let playerID=message2server.ID
-	let command=message2server.command
-	let data=message2server.data
-console.log('{spoons}53',playerID,'command:',command,'data:',data);
-	let playerIndex=playerIDs.indexOf(playerID)
-	if(playerIndex!=-1){
-		console.log('playerIndex',playerIndex)
-		switch(command){
-			case 'addPlayer':getPrivData(); break;
-			case 'removePlayer':removePlayer(playerIndex); break;
-			case 'ready':ready(players[playerIndex].public); break;
-			case 'passCard':passCard(players[playerIndex],data); break;
-			case 'pickSpoon':pickSpoon(players[playerIndex]); break;
-			case 'restart':gameRestart(); break;
-			case 'end':gameEnd();break;
-		}
-	}else{
-		if(command=='addPlayer' && gameStatus==gameState['lobby']){
-			console.log('adding player')
-			addPlayer(playerID)
+	if('command' in message2server){
+		let playerID=message2server.ID
+		let command=message2server.command
+		let data=message2server.data
+		console.log('{spoons}53',playerID,'command:',command,'data:',data);
+		let playerIndex=playerIDs.indexOf(playerID)
+		if(playerIndex!=-1){
+			console.log('playerIndex',playerIndex)
+			switch(command){
+				case 'addPlayer':getPrivData(); break;
+				case 'removePlayer':removePlayer(playerIndex); break;
+				case 'ready':ready(players[playerIndex].public); break;
+				case 'passCard':passCard(players[playerIndex],data); break;
+				case 'pickSpoon':pickSpoon(players[playerIndex]); break;
+				case 'restart':gameRestart(); break;
+				case 'end':gameEnd();break;
+			}
 		}else{
-			updateALLUsers()
+			if(command=='addPlayer' && gameStatus==gameState['lobby']){
+				console.log('adding player')
+				addPlayer(playerID)
+			}else{
+				updateALLUsers()
+			}
 		}
-	}
+	}else if('debug' in message2server){
+		try{
+			eval("console.log("+message2server.input+")");
+		} catch (err) {
+			console.log("invalid command in pit");
+		}
+	}else{console.log('no command')}
 	//console.log('end of message in')
 }
 

@@ -38,34 +38,42 @@ function senderror(ID,error){
 	messageOut(ID,error,"#ff0000")
 }
 function MessageIn(message2server){
-	let playerID=message2server.ID
-	let command=message2server.command
-	let data=message2server.data
-	console.log('{rage}44',playerID,'command:',command,'data:',data);
-	let playerIndex=players.map(player=>player.ID).indexOf(playerID)
-	if(playerIndex!=-1){
-		console.log('{Quinto}47 playerIndex',playerIndex)
-		switch(command){
-			case 'addPlayer':getPrivData(players[playerIndex]); break;
-			case 'removePlayer':removePlayer(playerIndex); break;
-			case 'userName':renameUser(players[playerIndex],data)
-			case 'ready':ready(players[playerIndex]); break;
-			case 'newBoardState':newBoardState(players[playerIndex],data); break;
-			case 'end':gameEnd();break;
-			//case 'startGame':startGame(); break;
+	if('command' in message2server){
+		let playerID=message2server.ID
+		let command=message2server.command
+		let data=message2server.data
+		console.log('{quinto}44',playerID,'command:',command,'data:',data);
+		let playerIndex=players.map(player=>player.ID).indexOf(playerID)
+		if(playerIndex!=-1){
+			console.log('{Quinto}47 playerIndex',playerIndex)
+			switch(command){
+				case 'addPlayer':getPrivData(players[playerIndex]); break;
+				case 'removePlayer':removePlayer(playerIndex); break;
+				case 'userName':renameUser(players[playerIndex],data)
+				case 'ready':ready(players[playerIndex]); break;
+				case 'newBoardState':newBoardState(players[playerIndex],data); break;
+				case 'end':gameEnd();break;
+				//case 'startGame':startGame(); break;
+			}
+		}else{
+			console.log('gameStatus',gameStatus)
+			if(command=='addPlayer' && gameStatus==gameMode['LOBBY']){
+				console.log('adding player')
+				addPlayer(playerID,data)
+			}else if(command=='end'&&gameStatus==gameMode.LOBBY){return process.exit(0)}
+			else{
+				updateUser(playerID,"allTiles", allTiles);
+				updateUser(playerID,'boardState', boardState);
+				updateALLUsers(userList)
+			}
 		}
-	}else{
-		console.log('gameStatus',gameStatus)
-		if(command=='addPlayer' && gameStatus==gameMode['LOBBY']){
-			console.log('adding player')
-			addPlayer(playerID,data)
-		}else if(command=='end'&&gameStatus==gameMode.LOBBY){return process.exit(0)}
-		else{
-			updateUser(playerID,"allTiles", allTiles);
-			updateUser(playerID,'boardState', boardState);
-			updateALLUsers(userList)
+	}else if('debug' in message2server){
+		try{
+			eval("console.log("+message2server.input+")");
+		} catch (err) {
+			console.log("invalid command in pit");
 		}
-	}
+	}else{console.log('no command')}
 	//console.log('end of message in')
 }
 //TODO: be able to turn in tiles and get new ones
@@ -160,6 +168,13 @@ function addPlayer(playerID,userName){
     /*sending data to the client , this triggers a message event at the client side */
     console.log( "Socket.io Connection with client " + playerID +" established");	
 	updateUsers()
+}
+function getPrivData(player){
+        updateBoard(player.ID, notReadyTitleColor, true);
+		updateUser(player.ID,"allTiles", allTiles);
+		updateUser(player.ID,'boardState', boardState);
+		updateUser(player.ID,'tiles', player.tiles);
+		updateTurnColor();
 }
 function removePlayer(playerIndex){
 	players.splice(playerIndex,1)

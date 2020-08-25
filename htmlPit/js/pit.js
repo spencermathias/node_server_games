@@ -9,8 +9,6 @@
 // TODO: fix chat chat stretch
 
 //events
-var publicAddress = Addresses.publicAddress;
-var internalAddress = Addresses.localAddress;
 
 
 window.addEventListener('load', function() {
@@ -64,10 +62,10 @@ function titleFunction(){
 	let title = document.getElementById('title')
 	if ( title.style.color == 'rgb(255, 0, 0)' ){
 		title.style.color = '#00ff00';
-		socket.emit('ready', {ready: true});
+		socket.emit('gameCommands',{command:'ready', data:{ready: true}});
 	} else {
 		title.style.color = '#ff0000';
-		socket.emit('ready', {ready: false});
+		socket.emit('gameCommands',{command:'ready', data:{ready: false}});
 	}
 	return false;
 }
@@ -169,7 +167,7 @@ class Tile extends Button{
 		if(tileData != undefined){
 			this.text = this.tileData.products.name;
 			this.visible = (this.text.length >= 0);*/
-		//}
+		//
 		console.log(this.cardNumber,'new',cardNumber);
 		this.text = allTiles.getProperties(cardNumber).products.name;
 		this.visible = (this.text.length >= 0);
@@ -250,7 +248,7 @@ class tradeButton extends Tile{
 	
 	click(){
 		console.log('tradeButton',this.userNumber,this.placeNumber);
-		socket.emit('tradeReady',this.userNumber,this.placeNumber);
+		socket.emit('gameCommands',{command:'tradeReady',data:this.userNumber});
 	}
 }
 
@@ -262,7 +260,9 @@ class bidButton extends Tile{
 	}
 	
 	checkVisibility(){
-		this.visible = userList[this.userNumber].bids[this.placeNumber]>0;
+		if(userList[this.userNumber]){
+			this.visible = userList[this.userNumber].bids[this.placeNumber]>0;
+		}
 	}
 	
 	click(){
@@ -270,7 +270,7 @@ class bidButton extends Tile{
 		let cardSelection = checkCardSelection();
 		if (cardSelection != undefined){
 			if (cardSelection.length == this.placeNumber + 1){
-				socket.emit('attemptTrade',cardSelection,this.userNumber);
+				socket.emit('gameCommands',{command:'attemptTrade',data:{cards:cardSelection,num:this.userNumber}});
 			}
 			else console.log('number of selected cards is not correct');
 		}
@@ -326,24 +326,24 @@ class BiddingInterface{
 			ctx.translate(canvas.width/2,this.y);
 			//if(this.textSlant){
 			//	ctx.rotate(Math.atan(this.height/this.width));
-			//}
+			//
 			ctx.fillText(this.user.userName,0,0);
 			//var nameWidth = ctx.measureText(user.userName).width;
 			//if(this.textOutline != undefined){
 				//ctx.strokeText(this.text, 0, 0);
-			//}
+			//
 			ctx.restore();
 			/*var x = (canvas.width/2)-(nameWidth/2)-(textsize/2)-(textsize*7);
 			for (var i = 1; i <= 4; i++){
 				shapes[0].push(new Button(x,y,textsize,textsize,i,'LightSeaGreen','#000000','#000000','#000000',textsize/2,false));
 				x += textsize*2;
-			}
+			
 			var x = (canvas.width/2)+(nameWidth/2)+(textsize/2)+(textsize*1);
 			for (var i = 1; i <= 4; i++){
 				shapes[0].push(new Button(x,y,textsize,textsize,i,'#8888ff','#000000','#000000','#000000',textsize/2,false));
 				x += textsize*2;
-			}*/
-		//});
+			*/
+		//;
 	}
 }
 
@@ -354,14 +354,14 @@ class SubmitButton extends Button{
 	}
 	click(){
 		if (tilesSelected == 0){
-			socket.emit('cheakEndOfRound');
+			socket.emit('gameCommands',{command:'checkEndOfRound'});
 		}
 		else{
 			if(this.visible){
 				let sendCards = checkCardSelection();
 				console.log(sendCards);
 				if (sendCards != undefined){
-					socket.emit('submitedBidTiles',sendCards);
+					socket.emit('gameCommands',{command:'submitedBidTiles',data:sendCards});
 				}
 			}
 		}
@@ -546,40 +546,28 @@ class Board {
 
 //socket stuff
 
-var socket = io(publicAddress); //try public address //"24.42.206.240" for alabama
+var socket = io(window.location.href);  //try public address //"24.42.206.240" for alabama
 
 var trylocal = 0;
-socket.on('connect_error',function(error){
-	console.log("I got an error!", error);
-	console.log("socket to:", socket.disconnect().io.uri, "has been closed.");
-	if(!trylocal){ //prevent loops
-		if(window.location.href != internalAddress){
-			window.location.replace(internalAddress);
-		}
-		socket.io.uri = internalAddress;
-		console.log("Switching to local url:", socket.io.uri);
-		console.log("Connecting to:",socket.connect().io.uri);
-		trylocal = 1;
-	}
+socket.on('connect', () => {
+    //socket.emit('gameCommands',{command:'addPlayer'});
+	console.log("Connection successful!")
 });
 
-socket.on('reconnect', function(attempt){
-	console.log("reconnect attempt number:", attempt);
-});
-
-socket.on('connect', function(){
-	//get userName
-	console.log("Connection successful!");
-	if(localStorage.userName === undefined){
-		changeName(socket.id);
-	} else {
-		socket.emit('userName', localStorage.userName);
-	}
-	
+socket.on('getOldID',(callBack)=>{
 	if(localStorage.id !== undefined){
-		socket.emit('oldId', localStorage.id);
+		console.log(localStorage)
+		callBack({ID:localStorage.id,name:localStorage.userName})
 	}
 	localStorage.id = socket.id;
+	socket.emit('gameCommands',{command:'addPlayer',data:localStorage.userName});
+})
+socket.on('forward to room',(path)=>{
+	console.log('move to path:',path)
+	window.location.href=path
+})
+socket.on('allTiles', function(inAllTiles){
+	allTiles = inAllTiles;
 });
 
 socket.on('tradeMatrix',(tradeMatrix)=>{
