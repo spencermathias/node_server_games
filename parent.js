@@ -309,7 +309,7 @@ var spoonsConnect=io.of('/spoonsConnect/').on('connection',function(socket){
         socket.userData.userName = userName;
 		allClients[socket.userData.myIDinGame].userName=userName
         console.log(__line,"user changed name: " + socket.userData.userName);
-		message(spoonsConnect.in(socket.userData.childProcessName), "" + oldName + " has channged name to "+socket.userData.userName, serverColor);
+		message(spoonsConnect.in(socket.userData.childProcessName), "" + oldName + " has changed name to "+socket.userData.userName, serverColor);
         if(allforked[socket.userData.childProcessName]!=undefined){
 			let message2server={command:'addPlayer',ID:socket.userData.myIDinGame}
 			allforked[socket.userData.childProcessName].send(message2server)
