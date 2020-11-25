@@ -89,7 +89,7 @@ function MessageIn(message2server){
 					displayGame: (gameStatus==gameMode.LOBBY) ? "none" : "flex"
 				};
 				updateUser(playerID,"showBoard", showBoardMessage);
-				updateUser(player.ID,"trumpCard", trumpCard)
+				updateUser(playerID,"trumpCard", trumpCard)
 				updateALLUsers(userList)
 				
 			}
