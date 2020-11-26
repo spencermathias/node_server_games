@@ -1,7 +1,7 @@
 try{
 	console.log('started Quinto')	
 	process.on('message', MessageIn);
-	var shared = require('../../htmlQuinto/js/shared.js'); //get shared functions
+	var shared = require('../htmlQuinto/js/shared.js'); //get shared functions
 	function updateUser(playerID,command,data){
 		process.send({playerID:playerID,command:command,data:data})
 	}
