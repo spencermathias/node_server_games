@@ -9,7 +9,7 @@ try{
 	console.log('started Pit')	
 	process.on('message', MessageIn);
 	var shared = require('../htmlPit/js/shared.js'); //get shared functions
-	var Deck = require('../htmlPit/js/deck.js')
+	var Deck = require('../htmlPit/js/Deck.js')
 	function updateUser(playerID,command,data){
 		process.send({playerID:playerID,command:command,data:data})
 	}

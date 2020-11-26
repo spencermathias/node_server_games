@@ -12,7 +12,7 @@ function loadgames(currentGames){
 	//let ul = document.getElementById("ulMessages");
 	while($("ul")[0].firstChild) $("ul")[0].firstChild.remove();
 	if(currentGames.length==0){
-		$("ul").append("<li> No games are currently avalible </li>")
+		$("ul").append("<li> No games are currently avalible.<br> Please create new game using drop down menu above </li>")
 	}else{
 		for(let i = currentGames.length-1;i>=0; i--){
 			let game = currentGames[i];

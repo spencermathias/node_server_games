@@ -1,0 +1,27 @@
+{
+  "name": "RPi-RTDS",
+  "version": "0.0.2",
+  "description": "Raspberry pi realtime data server based on node.js express and socket.io.",
+  "main": "parent.js",
+  "dependencies": {
+    "express": "^4.16.4",
+    "jasmine": "^3.5.0",
+    "mysql": "^2.18.1",
+    "socket.io": "^2.3.0",
+    "uid": "^2.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "jasmine"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spencermathias/node_server_games.git"
+  },
+  "author": "Alan and Spencer Mathias",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/spencermathias/node_server_games/issues"
+  },
+  "homepage": "https://github.com/flagstone78/RPi-RTDS#readme"
+}

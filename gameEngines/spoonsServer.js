@@ -1,6 +1,7 @@
+console.log('try to start spoons')
 try{
 	console.log('started spoons')
-	Deck=require('../gameHelperFunctions/deck.js')
+	Deck=require('../gameHelperFunctions/Deck.js')
 	console.log('deck imported')	
 	process.on('message', MessageIn);
 	function updateEachUser(){
@@ -22,6 +23,7 @@ try{
 	//loopPulse=setInterval(() => {console.log('live');}, 10000);
 }
 catch(err){
+	console.log('started catch error')
 	function updateEachUser(){
 		for(let i in playerIDs){
 			console.log(playerIDs[i],'updateUser',players[i].privateData)
@@ -38,6 +40,7 @@ catch(err){
 		console.log(ID,'message',messageObj);
 	}
 	var __line='spoonsServer'
+	console.error('finished catch'+err)
 }
 
 

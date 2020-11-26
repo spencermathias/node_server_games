@@ -5,8 +5,8 @@ var io = require('socket.io');
 var express = require('express'); // for serving webpages
 //var conDB=require('./mysqlConfig/databaseLogin.js')
 var app = express();
-var uid =require( 'uid');
-
+var uid =require( 'uid').uid;
+console.log(uid)
 var port=8080
 
 var server = http.createServer(app).listen(port,"0.0.0.0",511,function(){console.log(__line,"Server connected to socket: "+port);});//Server listens on the port 8124
@@ -252,7 +252,7 @@ function message(socket, message, color){
 	socket.emit('message',JSON.stringify(messageObj));
 }
 
-app.use(express.static('./lobby'))
+app.use('/',express.static('./Lobby'))
 //app.use('/test',express.static('./testConnection'))
 app.use('/spoonsConnect',express.static('./htmlSpoons'))
 var spoonsConnect=io.of('/spoonsConnect/').on('connection',function(socket){
