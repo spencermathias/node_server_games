@@ -287,9 +287,11 @@ var spoonsConnect=io.of('/spoonsConnect/').on('connection',function(socket){
 					message(spoonsConnect.in(roomname),''+allClients[socket.userData.myIDinGame].userName+' has returned',serverColor)
 				}
 				socket.on('gameCommands',(message2server)=>{
-					console.log('sending comand to ',socket.userData.childProcessName)
-					message2server.ID=socket.userData.myIDinGame
-					allforked[socket.userData.childProcessName].send(message2server)
+					if(allforked[socket.userData.childProcessName]!=undefined){
+						console.log('sending comand to ',socket.userData.childProcessName)
+						message2server.ID=socket.userData.myIDinGame
+						allforked[socket.userData.childProcessName].send(message2server)
+					}
 				});
 				socket.on("disconnect",function() {
 					console.log(__line,"disconnected: " + socket.userData.userName + ": " + socket.id);
@@ -399,7 +401,7 @@ var rageConnect=io.of('/rageConnect/').on('connection',function(socket){
         socket.userData.userName = userName;
 		allClients[socket.userData.myIDinGame].userName=userName
         console.log(__line,"user changed name: " + socket.userData.userName);
-		message(rageConnect.in(socket.userData.childProcessName), "" + oldName + " has channged name to "+socket.userData.userName, serverColor);
+		message(rageConnect.in(socket.userData.childProcessName), "" + oldName + " has changed name to "+socket.userData.userName, serverColor);
         if(allforked[socket.userData.childProcessName]!=undefined){
 			let message2server={command:'userName',ID:socket.userData.myIDinGame,data:userName}
 			allforked[socket.userData.childProcessName].send(message2server)
