@@ -387,7 +387,7 @@ var invalidPlayColor = '#ff0000';
 var defaultTileColor = '#ffe0b3';
 var newServerTileColor = '#aae0b3';
 var myTurn = false;
-var myUserlistIndex = 0;
+var myUserlistIndex = 'spectator';
 var myUserlistString = "";
 
 socket.on("message",function(message){  
@@ -488,14 +488,16 @@ socket.on('boardState', function(recievedBoardState){
 });
 
 function updatePlayValidity(){
-	var check = shared.validTilesToPlay(serverTiles, getTileData(newState), getTileData(boardState), allTiles);
-	if(check.error.length == 0){
-		$('#userListDiv'+myUserlistIndex)[0].innerHTML = (myUserlistString + " + " + check.score);
-	} else {
-		$('#userListDiv'+myUserlistIndex)[0].innerHTML = (myUserlistString);
+	if(myUserlistIndex!='spectator'){
+		var check = shared.validTilesToPlay(serverTiles, getTileData(newState), getTileData(boardState), allTiles);
+		if(check.error.length == 0){
+			$('#userListDiv'+myUserlistIndex)[0].innerHTML = (myUserlistString + " + " + check.score);
+		} else {
+			$('#userListDiv'+myUserlistIndex)[0].innerHTML = (myUserlistString);
+		}
+		scoreIsValid = check.error.length == 0;
+		//console.log("check", check);
 	}
-	scoreIsValid = check.error.length == 0;
-	//console.log("check", check);
 }
 
 function checkClick(event){

@@ -62,6 +62,7 @@ function MessageIn(message2server){
 				addPlayer(playerID,data)
 			}else if(command=='end'&&gameStatus==gameMode.LOBBY){return process.exit(0)}
 			else{
+				updateBoard(playerID, readyTitleColor, true)
 				updateUser(playerID,"allTiles", allTiles);
 				updateUser(playerID,'boardState', boardState);
 				updateALLUsers(userList)
