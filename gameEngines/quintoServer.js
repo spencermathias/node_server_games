@@ -72,7 +72,7 @@ function MessageIn(message2server){
 		try{
 			eval("console.log("+message2server.input+")");
 		} catch (err) {
-			console.log("invalid command in pit");
+			console.log("invalid command in quinto");
 		}
 	}else{console.log('no command')}
 	//console.log('end of message in')
@@ -171,7 +171,7 @@ function addPlayer(playerID,userName){
 	updateUsers()
 }
 function getPrivData(player){
-        updateBoard(player.ID, notReadyTitleColor, true);
+        updateBoard(player.ID, player.ready, gameStatus!=gameMode['LOBBY']);
 		updateUser(player.ID,"allTiles", allTiles);
 		updateUser(player.ID,'boardState', boardState);
 		updateUser(player.ID,'tiles', player.tiles);
