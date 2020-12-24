@@ -7,7 +7,7 @@ var express = require('express'); // for serving webpages
 var app = express();
 var uid =require( 'uid').uid;
 console.log(uid)
-var port=8080
+var port=8081
 
 var server = http.createServer(app).listen(port,"0.0.0.0",511,function(){console.log(__line,"Server connected to socket: "+port);});//Server listens on the port 8124
 console.log('server started')
@@ -185,6 +185,17 @@ io.sockets.on("connection", function(socket) {
 				newgame='pitServer.js'
 				connectorSocket=pitConnect
 			break;
+			case 'Debug':
+				if(allforked['temp']){
+					delete allforked['temp']
+				}else{
+					allforked['temp']={'URL':'alanisboard.ddns.net:8081'}
+					socket.emit('forward to room',allforked.temp.URL)
+				}
+				activeGames=[]
+				for(game in allforked){activeGames.push({name:game,URL:allforked[game].URL})}
+				
+				
 			default:validType=false;
 		}
 		if(validType){
@@ -251,111 +262,17 @@ function message(socket, message, color){
 	};
 	socket.emit('message',JSON.stringify(messageObj));
 }
-
-app.use('/',express.static('./Lobby'))
-//app.use('/test',express.static('./testConnection'))
-app.use('/spoonsConnect',express.static('./htmlSpoons'))
-var spoonsConnect=io.of('/spoonsConnect/').on('connection',function(socket){
+function connectionFunction(socket){
 	//join room
 	socket.userData={}
 	let roomname=socket.conn.request._query.ID
-	console.log(__line, "spoonsConnect Connection with client " + socket.id +" established in room: "+roomname);
+	console.log(__line, "Connection with client " + socket.id +" established in room: "+roomname);
 	socket.join(roomname)
 	socket.emit('getOldID',(data)=>{
 		console.log('this is data ',data)
 		let gameID=IDs.socketsIDs[data.ID]
-		console.log('current IDs ',IDs)
-		console.log('gameID',gameID)
-		//console.log('allforked',allforked)
-		if(gameID!=undefined){
-			console.log('not undefined gameID',gameID)
-			IDs.gameIDs[gameID]=socket.id
-			IDs.socketsIDs[socket.id]=gameID
-			delete IDs.socketsIDs[data.ID]
-			console.log('current clients ',allClients)
-			socket.userData=allClients[gameID]
-			//console.log('this socket userData ',socket.userData)
-			socket.userData.childProcessName=roomname
-			socket.userData.userName=data.name
-			allClients[socket.userData.myIDinGame].childProcessName=roomname
-			allClients[socket.userData.myIDinGame].userName=data.name
-			console.log('this socket userData ',socket.userData)
-			if(allforked[socket.userData.childProcessName]!=undefined){
-				let disconnectedIndex=allforked[socket.userData.childProcessName].disconnectedPlayers.indexOf(socket.userData.myIDinGame)
-				if(disconnectedIndex!=-1){
-					allforked[socket.userData.childProcessName].disconnectedPlayers.splice(disconnectedIndex,1)
-					message(spoonsConnect.in(roomname),''+allClients[socket.userData.myIDinGame].userName+' has returned',serverColor)
-				}
-				socket.on('gameCommands',(message2server)=>{
-					console.log('sending comand to ',socket.userData.childProcessName)
-					message2server.ID=socket.userData.myIDinGame
-					allforked[socket.userData.childProcessName].send(message2server)
-				});
-				socket.on("disconnect",function() {
-					console.log(__line,"disconnected: " + socket.userData.userName + ": " + socket.id);
-					if (allforked[socket.userData.childProcessName]!=undefined){
-						let room=socket.userData.childProcessName
-						message( socket.to(room), "" + socket.userData.userName + " has left.", serverColor);
-						message( socket.to(room), "Type 'kick' to kick disconnected players", serverColor);
-						allforked[socket.userData.childProcessName].disconnectedPlayers.push(socket.userData.myIDinGame)
-					}else{spoonsConnect.in(roomname).emit('forward to room','/')}
-				});
-			}else{spoonsConnect.in(roomname).emit('forward to room','/')}
-		}else{spoonsConnect.in(roomname).emit('forward to room','/')}
-	})
-	socket.on('test',()=>{console.log('test')})
-	socket.on("userName", function(userName) {
-		let oldName=socket.userData.userName
-        socket.userData.userName = userName;
-		allClients[socket.userData.myIDinGame].userName=userName
-        console.log(__line,"user changed name: " + socket.userData.userName);
-		message(spoonsConnect.in(socket.userData.childProcessName), "" + oldName + " has changed name to "+socket.userData.userName, serverColor);
-        if(allforked[socket.userData.childProcessName]!=undefined){
-			let message2server={command:'addPlayer',ID:socket.userData.myIDinGame}
-			allforked[socket.userData.childProcessName].send(message2server)
-		}
-		//updateUsers();
-    });
-	socket.on("message",function(data) {
-        /*This event is triggered at the server side when client sends the data using socket.send() method */
-        let room=socket.userData.childProcessName
-		data = JSON.parse(data);
-        console.log(__line, "data: ", data);
-        /*Printing the data */
-		message( socket, "You: " + data.message, chatColor);
-		message( socket.to(room), "" + socket.userData.userName + ": " + data.message, chatColor);
-        if(data.message === "end") {
-            if(allforked[socket.userData.childProcessName]!=undefined){
-				console.log(__line,''+socket.userData.username+" forced end");
-				let message2server={command:'end',ID:socket.userData.myIDinGame}
-				allforked[socket.userData.childProcessName].send(message2server)
-			}
-        } else if(data.message.toLowerCase() === "kick"){
-			console.log(__line, "clearing players");
-			if(allforked[socket.userData.childProcessName]!=undefined){
-				for(player of allforked[socket.userData.childProcessName].disconnectedPlayers){
-					console.log(__line,"removing "+allClients[player].userName+' ID of: '+player);
-					let message2server={command:'removePlayer',ID:player}
-					allforked[socket.userData.childProcessName].send(message2server)
-				}
-			}
-		}
-        /*Sending the Acknowledgement back to the client , this will trigger "message" event on the clients side*/
-    });
-})
-
-app.use('/rageConnect',express.static('./htmlRage'))
-var rageConnect=io.of('/rageConnect/').on('connection',function(socket){
-	//join room
-	socket.userData={}
-	let roomname=socket.conn.request._query.ID
-	console.log(__line, "rageConnect Connection with client " + socket.id +" established in room: "+roomname);
-	socket.join(roomname)
-	socket.emit('getOldID',(data)=>{
-		console.log('this is data ',data)
-		let gameID=IDs.socketsIDs[data.ID]
-		console.log('current IDs ',IDs)
-		console.log('gameID',gameID)
+		//console.log('current IDs ',IDs)
+		//console.log('gameID',gameID)
 		//console.log('allforked',allforked)
 		if(gameID!=undefined){
 			console.log('not undefined gameID',gameID)
@@ -377,9 +294,11 @@ var rageConnect=io.of('/rageConnect/').on('connection',function(socket){
 					message(rageConnect.in(roomname),''+allClients[socket.userData.myIDinGame].userName+' has returned',serverColor)
 				}
 				socket.on('gameCommands',(message2server)=>{
-					console.log('sending comand to ',socket.userData.childProcessName)
-					message2server.ID=socket.userData.myIDinGame
-					allforked[socket.userData.childProcessName].send(message2server)
+					if(allforked[socket.userData.childProcessName]!=undefined){
+						console.log('sending comand to ',socket.userData.childProcessName)
+						message2server.ID=socket.userData.myIDinGame
+						allforked[socket.userData.childProcessName].send(message2server)
+					}else{rageConnect.in(roomname).emit('forward to room','/')}
 				});
 				socket.on("disconnect",function() {
 					console.log(__line,"disconnected: " + socket.userData.userName + ": " + socket.id);
@@ -432,277 +351,24 @@ var rageConnect=io.of('/rageConnect/').on('connection',function(socket){
 		}
         /*Sending the Acknowledgement back to the client , this will trigger "message" event on the clients side*/
     });
-})
+}
+app.use('/',express.static('./Lobby'))
+//app.use('/test',express.static('./testConnection'))
+app.use('/spoonsConnect',express.static('./htmlSpoons'))
+var spoonsConnect=io.of('/spoonsConnect/').on('connection',connectionFunction)
+
+app.use('/rageConnect',express.static('./htmlRage'))
+var rageConnect=io.of('/rageConnect/').on('connection',connectionFunction)
 
 app.use('/QuintoConnect',express.static('./htmlQuinto'))
-var quintoConnect=io.of('/quintoConnect/').on('connection',function(socket){
-	//join room
-	socket.userData={}
-	let roomname=socket.conn.request._query.ID
-	console.log(__line, "quintoConnect with client " + socket.id +" established in room: "+roomname);
-	socket.join(roomname)
-	socket.emit('getOldID',(data)=>{
-		console.log('this is data ',data)
-		let gameID=IDs.socketsIDs[data.ID]
-		console.log('current IDs ',IDs)
-		console.log('gameID',gameID)
-		//console.log('allforked',allforked)
-		if(gameID!=undefined){
-			console.log('not undefined gameID',gameID)
-			IDs.gameIDs[gameID]=socket.id
-			IDs.socketsIDs[socket.id]=gameID
-			delete IDs.socketsIDs[data.ID]
-			console.log('current clients ',allClients)
-			socket.userData=allClients[gameID]
-			//console.log('this socket userData ',socket.userData)
-			socket.userData.childProcessName=roomname
-			socket.userData.userName=data.name
-			allClients[socket.userData.myIDinGame].childProcessName=roomname
-			allClients[socket.userData.myIDinGame].userName=data.name
-			console.log('this socket userData ',socket.userData)
-			if(allforked[socket.userData.childProcessName]!=undefined){
-				let disconnectedIndex=allforked[socket.userData.childProcessName].disconnectedPlayers.indexOf(socket.userData.myIDinGame)
-				if(disconnectedIndex!=-1){
-					allforked[socket.userData.childProcessName].disconnectedPlayers.splice(disconnectedIndex,1)
-					message(quintoConnect.in(roomname),''+allClients[socket.userData.myIDinGame].userName+' has returned',serverColor)
-				}
-				socket.on('gameCommands',(message2server)=>{
-					console.log('sending comand to ',socket.userData.childProcessName)
-					message2server.ID=socket.userData.myIDinGame
-					allforked[socket.userData.childProcessName].send(message2server)
-				});
-				socket.on("disconnect",function() {
-					console.log(__line,"disconnected: " + socket.userData.userName + ": " + socket.id);
-					if (allforked[socket.userData.childProcessName]!=undefined){
-						let room=socket.userData.childProcessName
-						message( socket.to(room), "" + socket.userData.userName + " has left.", serverColor);
-						message( socket.to(room), "Type 'kick' to kick disconnected players", serverColor);
-						allforked[socket.userData.childProcessName].disconnectedPlayers.push(socket.userData.myIDinGame)
-					}else{quintoConnect.in(roomname).emit('forward to room','/')}
-				});
-			}else{quintoConnect.in(roomname).emit('forward to room','/')}
-		}else{quintoConnect.in(roomname).emit('forward to room','/')}
-	})
-	socket.on('test',()=>{console.log('test')})
-	socket.on("userName", function(userName) {
-		let oldName=socket.userData.userName
-        socket.userData.userName = userName;
-		allClients[socket.userData.myIDinGame].userName=userName
-        console.log(__line,"user changed name: " + socket.userData.userName);
-		message(quintoConnect.in(socket.userData.childProcessName), "" + oldName + " has channged name to "+socket.userData.userName, serverColor);
-        if(allforked[socket.userData.childProcessName]!=undefined){
-			let message2server={command:'userName',ID:socket.userData.myIDinGame,data:userName}
-			allforked[socket.userData.childProcessName].send(message2server)
-		}
-		//updateUsers();
-    });
-	socket.on("message",function(data) {
-        //This event is triggered at the server side when client sends the data using socket.send() method 
-        let room=socket.userData.childProcessName
-		data = JSON.parse(data);
-        console.log(__line, "data: ", data);
-        //Printing the data 
-		message( socket, "You: " + data.message, chatColor);
-		message( socket.to(room), "" + socket.userData.userName + ": " + data.message, chatColor);
-        if(data.message === "end") {
-            if(allforked[socket.userData.childProcessName]!=undefined){
-				console.log(__line,''+socket.userData.username+" forced end");
-				let message2server={command:'end',ID:socket.userData.myIDinGame}
-				allforked[socket.userData.childProcessName].send(message2server)
-			}
-        } else if(data.message.toLowerCase() === "kick"){
-			console.log(__line, "clearing players");
-			if(allforked[socket.userData.childProcessName]!=undefined){
-				for(player of allforked[socket.userData.childProcessName].disconnectedPlayers){
-					console.log(__line,"removing "+allClients[player].userName+' ID of: '+player);
-					let message2server={command:'removePlayer',ID:player}
-					allforked[socket.userData.childProcessName].send(message2server)
-				}
-			}
-		}
-        //Sending the Acknowledgement back to the client , this will trigger "message" event on the clients side
-    });
-})
+var quintoConnect=io.of('/quintoConnect/').on('connection',connectionFunction)
 
 app.use('/PitConnect',express.static('./htmlPit'))
-var pitConnect=io.of('/pitConnect/').on('connection',function(socket){
-	//join room
-	socket.userData={}
-	let roomname=socket.conn.request._query.ID
-	console.log(__line, "pitConnect with client " + socket.id +" established in room: "+roomname);
-	socket.join(roomname)
-	socket.emit('getOldID',(data)=>{
-		console.log('this is data ',data)
-		let gameID=IDs.socketsIDs[data.ID]
-		console.log('current IDs ',IDs)
-		console.log('gameID',gameID)
-		//console.log('allforked',allforked)
-		if(gameID!=undefined){
-			console.log('not undefined gameID',gameID)
-			IDs.gameIDs[gameID]=socket.id
-			IDs.socketsIDs[socket.id]=gameID
-			delete IDs.socketsIDs[data.ID]
-			console.log('current clients ',allClients)
-			socket.userData=allClients[gameID]
-			//console.log('this socket userData ',socket.userData)
-			socket.userData.childProcessName=roomname
-			socket.userData.userName=data.name
-			allClients[socket.userData.myIDinGame].childProcessName=roomname
-			allClients[socket.userData.myIDinGame].userName=data.name
-			console.log('this socket userData ',socket.userData)
-			if(allforked[socket.userData.childProcessName]!=undefined){
-				let disconnectedIndex=allforked[socket.userData.childProcessName].disconnectedPlayers.indexOf(socket.userData.myIDinGame)
-				if(disconnectedIndex!=-1){
-					allforked[socket.userData.childProcessName].disconnectedPlayers.splice(disconnectedIndex,1)
-					message(pitConnect.in(roomname),''+allClients[socket.userData.myIDinGame].userName+' has returned',serverColor)
-				}
-				socket.on('gameCommands',(message2server)=>{
-					console.log('sending comand to ',socket.userData.childProcessName)
-					message2server.ID=socket.userData.myIDinGame
-					allforked[socket.userData.childProcessName].send(message2server)
-				});
-				socket.on("disconnect",function() {
-					console.log(__line,"disconnected: " + socket.userData.userName + ": " + socket.id);
-					if (allforked[socket.userData.childProcessName]!=undefined){
-						let room=socket.userData.childProcessName
-						message( socket.to(room), "" + socket.userData.userName + " has left.", serverColor);
-						message( socket.to(room), "Type 'kick' to kick disconnected players", serverColor);
-						allforked[socket.userData.childProcessName].disconnectedPlayers.push(socket.userData.myIDinGame)
-					}else{pitConnect.in(roomname).emit('forward to room','/')}
-				});
-			}else{pitConnect.in(roomname).emit('forward to room','/')}
-		}else{pitConnect.in(roomname).emit('forward to room','/')}
-	})
-	socket.on('test',()=>{console.log('test')})
-	socket.on("userName", function(userName) {
-		let oldName=socket.userData.userName
-        socket.userData.userName = userName;
-		allClients[socket.userData.myIDinGame].userName=userName
-        console.log(__line,"user changed name: " + socket.userData.userName);
-		message(pitConnect.in(socket.userData.childProcessName), "" + oldName + " has channged name to "+socket.userData.userName, serverColor);
-        if(allforked[socket.userData.childProcessName]!=undefined){
-			let message2server={command:'userName',ID:socket.userData.myIDinGame,data:userName}
-			allforked[socket.userData.childProcessName].send(message2server)
-		}
-		//updateUsers();
-    });
-	socket.on("message",function(data) {
-        //This event is triggered at the server side when client sends the data using socket.send() method 
-        let room=socket.userData.childProcessName
-		data = JSON.parse(data);
-        console.log(__line, "data: ", data);
-        //Printing the data 
-		message( socket, "You: " + data.message, chatColor);
-		message( socket.to(room), "" + socket.userData.userName + ": " + data.message, chatColor);
-        if(data.message === "end") {
-            if(allforked[socket.userData.childProcessName]!=undefined){
-				console.log(__line,''+socket.userData.username+" forced end");
-				let message2server={command:'end',ID:socket.userData.myIDinGame}
-				allforked[socket.userData.childProcessName].send(message2server)
-			}
-        } else if(data.message.toLowerCase() === "kick"){
-			console.log(__line, "clearing players");
-			if(allforked[socket.userData.childProcessName]!=undefined){
-				for(player of allforked[socket.userData.childProcessName].disconnectedPlayers){
-					console.log(__line,"removing "+allClients[player].userName+' ID of: '+player);
-					let message2server={command:'removePlayer',ID:player}
-					allforked[socket.userData.childProcessName].send(message2server)
-				}
-			}
-		}
-        //Sending the Acknowledgement back to the client , this will trigger "message" event on the clients side
-    });
-})
+var pitConnect=io.of('/pitConnect/').on('connection',connectionFunction)
 
-app.use('/mooseConnect',express.static('./htmlRage'))
-var mooseConnect=io.of('/mooseConnect/').on('connection',function(socket){
-	//join room
-	socket.userData={}
-	let roomname=socket.conn.request._query.ID
-	console.log(__line, "mooseConnect Connection with client " + socket.id +" established in room: "+roomname);
-	socket.join(roomname)
-	socket.emit('getOldID',(data)=>{
-		console.log('this is data ',data)
-		let gameID=IDs.socketsIDs[data.ID]
-		console.log('current IDs ',IDs)
-		console.log('gameID',gameID)
-		//console.log('allforked',allforked)
-		if(gameID!=undefined){
-			console.log('not undefined gameID',gameID)
-			IDs.gameIDs[gameID]=socket.id
-			IDs.socketsIDs[socket.id]=gameID
-			delete IDs.socketsIDs[data.ID]
-			console.log('current clients ',allClients)
-			socket.userData=allClients[gameID]
-			//console.log('this socket userData ',socket.userData)
-			socket.userData.childProcessName=roomname
-			socket.userData.userName=data.name
-			allClients[socket.userData.myIDinGame].childProcessName=roomname
-			allClients[socket.userData.myIDinGame].userName=data.name
-			console.log('this socket userData ',socket.userData)
-			if(allforked[socket.userData.childProcessName]!=undefined){
-				let disconnectedIndex=allforked[socket.userData.childProcessName].disconnectedPlayers.indexOf(socket.userData.myIDinGame)
-				if(disconnectedIndex!=-1){
-					allforked[socket.userData.childProcessName].disconnectedPlayers.splice(disconnectedIndex,1)
-					message(mooseConnect.in(roomname),''+allClients[socket.userData.myIDinGame].userName+' has returned',serverColor)
-				}
-				socket.on('gameCommands',(message2server)=>{
-					console.log('sending comand to ',socket.userData.childProcessName)
-					message2server.ID=socket.userData.myIDinGame
-					allforked[socket.userData.childProcessName].send(message2server)
-				});
-				socket.on("disconnect",function() {
-					console.log(__line,"disconnected: " + socket.userData.userName + ": " + socket.id);
-					if (allforked[socket.userData.childProcessName]!=undefined){
-						let room=socket.userData.childProcessName
-						message( socket.to(room), "" + socket.userData.userName + " has left.", serverColor);
-						message( socket.to(room), "Type 'kick' to kick disconnected players", serverColor);
-						allforked[socket.userData.childProcessName].disconnectedPlayers.push(socket.userData.myIDinGame)
-					}else{mooseConnect.in(roomname).emit('forward to room','/')}
-				});
-			}else{mooseConnect.in(roomname).emit('forward to room','/')}
-		}else{mooseConnect.in(roomname).emit('forward to room','/')}
-	})
-	socket.on('test',()=>{console.log('test')})
-	socket.on("userName", function(userName) {
-		let oldName=socket.userData.userName
-        socket.userData.userName = userName;
-		allClients[socket.userData.myIDinGame].userName=userName
-        console.log(__line,"user changed name: " + socket.userData.userName);
-		message(mooseConnect.in(socket.userData.childProcessName), "" + oldName + " has channged name to "+socket.userData.userName, serverColor);
-        if(allforked[socket.userData.childProcessName]!=undefined){
-			let message2server={command:'userName',ID:socket.userData.myIDinGame,data:userName}
-			allforked[socket.userData.childProcessName].send(message2server)
-		}
-		//updateUsers();
-    });
-	socket.on("message",function(data) {
-        /*This event is triggered at the server side when client sends the data using socket.send() method */
-        let room=socket.userData.childProcessName
-		data = JSON.parse(data);
-        console.log(__line, "data: ", data);
-        /*Printing the data */
-		message( socket, "You: " + data.message, chatColor);
-		message( socket.to(room), "" + socket.userData.userName + ": " + data.message, chatColor);
-        if(data.message === "end") {
-            if(allforked[socket.userData.childProcessName]!=undefined){
-				console.log(__line,''+socket.userData.username+" forced end");
-				let message2server={command:'end',ID:socket.userData.myIDinGame}
-				allforked[socket.userData.childProcessName].send(message2server)
-			}
-        } else if(data.message.toLowerCase() === "kick"){
-			console.log(__line, "clearing players");
-			if(allforked[socket.userData.childProcessName]!=undefined){
-				for(player of allforked[socket.userData.childProcessName].disconnectedPlayers){
-					console.log(__line,"removing "+allClients[player].userName+' ID of: '+player);
-					let message2server={command:'removePlayer',ID:player}
-					allforked[socket.userData.childProcessName].send(message2server)
-				}
-			}
-		}
-        /*Sending the Acknowledgement back to the client , this will trigger "message" event on the clients side*/
-    });
-})
+app.use('/mooseConnect',express.static('./htmlMooseMt'))
+var mooseConnect=io.of('/mooseConnect/').on('connection',connectionFunction)
+
 
 //const second = fork('child.js');
 /*for(i=0;i<2;i++){
