@@ -24,6 +24,11 @@ var IDs={
 		this.socketsIDs[socketsID]=gameID
 		this.gameIDs[gameID]=socketsID
 		return gameID
+	},
+		let gameID=IDs.socketsIDs[oldID]
+		IDs.gameIDs[gameID]=newID
+		IDs.socketsIDs[newID]=gameID
+		delete IDs.socketsIDs[oldID]
 	}
 }
 var allClients={}
@@ -68,9 +73,9 @@ app.use('/lobbies',  function (req, res){
 //connections to lobby
 io.sockets.on("connection", function(socket) {
 	socket.userData={}
-	let roomname=socket.conn.request._query.ID
-	console.log(__line, "lobby Connection with client " + socket.id +" established in room: "+roomname);
-	socket.join(roomname)
+	//let roomname=socket.conn.request._query.ID
+	console.log(__line, "lobby Connection with client " + socket.id +" established in room: lobby");
+	//socket.join(roomname)
 	socket.emit('getOldID',(data)=>{
 		console.log('this is data ',data)
 		let gameID=IDs.socketsIDs[data.ID]
@@ -79,31 +84,9 @@ io.sockets.on("connection", function(socket) {
 		//console.log('allforked',allforked)
 		if(gameID!=undefined){
 			console.log('not undefined gameID',gameID)
-			IDs.gameIDs[gameID]=socket.id
-			IDs.socketsIDs[socket.id]=gameID
-			delete IDs.socketsIDs[data.ID]
-			//console.log('current clients ',allClients)
+			IDs.updateID(data.ID,socket.id)
 			socket.userData=allClients[gameID]
-			//console.log('this socket userData ',socket.userData)
-			socket.userData.childProcessName=roomname
-			socket.userData.userName=data.name
 			allClients[socket.userData.myIDinGame].childProcessName='inMainLobby'
-			allClients[socket.userData.myIDinGame].userName=data.name
-			//console.log('this socket userData ',socket.userData)
-			if(allforked[socket.userData.childProcessName]!=undefined){
-				socket.on('gameCommands',(message2server)=>{
-					console.log('sending comand to ',socket.userData.childProcessName)
-					message2server.ID=socket.userData.myIDinGame
-					allforked[socket.userData.childProcessName].send(message2server)
-				});
-				socket.on("disconnect",function() {
-					let room=socket.userData.childProcessName
-					//message( socket.to(room), "" + socket.userData.userName + " has left.", serverColor);
-					//message( socket.to(room), "Type 'kick' to kick disconnected players", serverColor);
-					console.log(__line,"disconnected: " + socket.userData.userName + ": " + socket.id);
-					//allforked[socket.userData.childProcessName].disconnectedPlayers.push(socket.userData.myIDinGame)
-				});
-			}
 		}else{
 			gameID=IDs.addID(socket.id)
 			allClients[gameID]=defaultUserData(gameID)
@@ -189,7 +172,7 @@ io.sockets.on("connection", function(socket) {
 				if(allforked['temp']){
 					delete allforked['temp']
 				}else{
-					allforked['temp']={'URL':'alanisboard.ddns.net:8081'}
+					allforked['temp']={'URL':'http:\\alanisboard.ddns.net:8081'}
 					socket.emit('forward to room',allforked.temp.URL)
 				}
 				activeGames=[]
@@ -276,9 +259,7 @@ function connectionFunction(socket){
 		//console.log('allforked',allforked)
 		if(gameID!=undefined){
 			console.log('not undefined gameID',gameID)
-			IDs.gameIDs[gameID]=socket.id
-			IDs.socketsIDs[socket.id]=gameID
-			delete IDs.socketsIDs[data.ID]
+			IDs.updateID(data.ID,socket.id)
 			console.log('current clients ',allClients)
 			socket.userData=allClients[gameID]
 			//console.log('this socket userData ',socket.userData)
@@ -291,14 +272,17 @@ function connectionFunction(socket){
 				let disconnectedIndex=allforked[socket.userData.childProcessName].disconnectedPlayers.indexOf(socket.userData.myIDinGame)
 				if(disconnectedIndex!=-1){
 					allforked[socket.userData.childProcessName].disconnectedPlayers.splice(disconnectedIndex,1)
-					message(rageConnect.in(roomname),''+allClients[socket.userData.myIDinGame].userName+' has returned',serverColor)
 				}
 				socket.on('gameCommands',(message2server)=>{
 					if(allforked[socket.userData.childProcessName]!=undefined){
 						console.log('sending comand to ',socket.userData.childProcessName)
 						message2server.ID=socket.userData.myIDinGame
 						allforked[socket.userData.childProcessName].send(message2server)
-					}else{rageConnect.in(roomname).emit('forward to room','/')}
+					}else{
+						message( socket, 'room dosenot exist forwarding to lobby', serverColor);
+						socket.emit('forward to room','/')
+						message( socket, 'room dosenot exist forwarding to lobby', serverColor);
+					} 
 				});
 				socket.on("disconnect",function() {
 					console.log(__line,"disconnected: " + socket.userData.userName + ": " + socket.id);
@@ -307,10 +291,10 @@ function connectionFunction(socket){
 						message( socket.to(room), "" + socket.userData.userName + " has left.", serverColor);
 						message( socket.to(room), "Type 'kick' to kick disconnected players", serverColor);
 						allforked[socket.userData.childProcessName].disconnectedPlayers.push(socket.userData.myIDinGame)
-					}else{rageConnect.in(roomname).emit('forward to room','/')}
+					}else{socket.emit('forward to room','/')}
 				});
-			}else{rageConnect.in(roomname).emit('forward to room','/')}
-		}else{rageConnect.in(roomname).emit('forward to room','/')}
+			}else{socket.emit('forward to room','/')}
+		}else{socket.emit('forward to room','/')}
 	})
 	socket.on('test',()=>{console.log('test')})
 	socket.on("userName", function(userName) {
@@ -318,7 +302,7 @@ function connectionFunction(socket){
         socket.userData.userName = userName;
 		allClients[socket.userData.myIDinGame].userName=userName
         console.log(__line,"user changed name: " + socket.userData.userName);
-		message(rageConnect.in(socket.userData.childProcessName), "" + oldName + " has channged name to "+socket.userData.userName, serverColor);
+		message(rageConnect.in(socket.userData.childProcessName), "" + oldName + " has changed name to "+socket.userData.userName, serverColor);
         if(allforked[socket.userData.childProcessName]!=undefined){
 			let message2server={command:'userName',ID:socket.userData.myIDinGame,data:userName}
 			allforked[socket.userData.childProcessName].send(message2server)
