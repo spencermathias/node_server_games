@@ -173,7 +173,7 @@ io.sockets.on("connection", function(socket) {
 				if(allforked['temp']){
 					delete allforked['temp']
 				}else{
-					allforked['temp']={'URL':'http:\\\\alanisboard.ddns.net:8081'}
+					allforked['temp']={'URL':'http://alanisboard.ddns.net:8081'}
 					socket.emit('forward to room',allforked.temp.URL)
 				}
 				activeGames=[]
