@@ -7,7 +7,7 @@ var express = require('express'); // for serving webpages
 var app = express();
 var uid =require( 'uid').uid;
 console.log(uid)
-var port=8081
+var port=8080
 
 var server = http.createServer(app).listen(port,"0.0.0.0",511,function(){console.log(__line,"Server connected to socket: "+port);});//Server listens on the port 8124
 console.log('server started')
