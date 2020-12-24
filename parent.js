@@ -25,6 +25,7 @@ var IDs={
 		this.gameIDs[gameID]=socketsID
 		return gameID
 	},
+	updateID(oldID,newID){
 		let gameID=IDs.socketsIDs[oldID]
 		IDs.gameIDs[gameID]=newID
 		IDs.socketsIDs[newID]=gameID
