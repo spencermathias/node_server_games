@@ -7,7 +7,7 @@ var express = require('express'); // for serving webpages
 var app = express();
 var uid =require( 'uid').uid;
 console.log(uid)
-var port=8080
+var port=8081
 
 var server = http.createServer(app).listen(port,"0.0.0.0",511,function(){console.log(__line,"Server connected to socket: "+port);});//Server listens on the port 8124
 console.log('server started')
@@ -124,27 +124,16 @@ io.sockets.on("connection", function(socket) {
         /*Printing the data */
 		message( socket, "You: " + data.message, chatColor);
 		message( socket.broadcast, "" + socket.userData.userName + ": " + data.message, chatColor);
-
-        if(data.message === "end") {
-            console.log(__line,"forced end");
-            //closeGame();//????
-        } else if(data.message === "start") {
-            console.log(__line,"forced start");
-            //gameStart();
-        } else if(data.message.toLowerCase() === "kick"){
-			console.log(__line, "clearing players");
-			//uncrib.kickPlayers()
-		}
         /*Sending the Acknowledgement back to the client , this will trigger "message" event on the clients side*/
     });
 
-    socket.on("userName", function(userName) {
-        allClients[socket.userData.myIDinGame].userName=userName
-		socket.userData.userName = userName;
-        console.log(__line,"user changed name " + socket.userData.userName);
-		message(io.sockets, "" + socket.userData.userName + " has changed name", serverColor);
-        //updateUsers();
-    });
+    // socket.on("userName", function(userName) {
+        // allClients[socket.userData.myIDinGame].userName=userName
+		// socket.userData.userName = userName;
+        // console.log(__line,"user changed name " + socket.userData.userName);
+		// message(io.sockets, "" + socket.userData.userName + " has changed name", serverColor);
+        // //updateUsers();
+    // });
 
     socket.on('newgame',(type)=>{
 		console.log(type)
