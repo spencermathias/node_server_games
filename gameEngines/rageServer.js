@@ -256,6 +256,7 @@ function getPrivData(player){
         displayGame: (gameStatus==gameMode.LOBBY) ? "none" : "flex"
     };
     updateUser(player.ID,"showBoard", showBoardMessage);
+	messageOut('all',player.userName+' has returned',serverColor)
 	switch(gameStatus){
 		case gameMode.BID:
 				if(players[currentTurn].ID==player.ID){updateUser(player.ID,'playerLeadsRound',true)};
@@ -263,7 +264,7 @@ function getPrivData(player){
 			updateUser(player.ID,"cards", player.cards);
 			//reset bids
 			player.bid = -1; 
-			updateUser(player.ID,"requestBid");
+			updateUser(player.ID,"requestBid",currentRound);
 			player.statusColor = notReadyColor;
 			updateUser(player.ID,'playerLeadsRound',player.ID==players[currentTurn].ID);
 		break;
@@ -487,7 +488,41 @@ function startRound() {
     console.log('{rage}'," wait for bids ");
     getBids();
 }
+function startZeroRound() {
+	deck = makeDeck();
+	players.forEach(function(player){ //reset player for round
+		let cardToGive;
+		cardToGive = chooseRandomCard(deck);
+        cardToGive.owner = player.ID;
+		player.cards = [cardToGive];
+		player.handsWon = [];
+		player.handScore = 0;
+		player.bid = -1;
+		player.cardSelected = cardToGive;
+	});
+	
+    console.log('{rage}', "round: " + currentRound);
+	nextToLeadRound += 1; //next person in order starts round
+	nextToLeadHand = currentTurn = nextToLeadRound%players.length;
+	console.log('{rage}',players[currentTurn].ID + " leads this round!"); //might need to mod by players.length
+	
+	updateUser(players[currentTurn].ID,'playerLeadsRound',true);
+	messageOut('all', players[currentTurn].userName + " leads this round!", gameColor);
+	
+    //console.log('{rage}',"deck length: ", deck.length);4
+    
+    //dealCards(deck, currentRound);
+	
+    chooseTrumpCard(deck);
+    console.log('{rage}',"trump is: " , trumpCard);
+    //console.log('{rage}', "deck length: ", deck.length);
 
+    sendCards();
+    updateUsers();
+
+    console.log('{rage}'," wait for bids ");
+    getBids();
+}
 function makeDeck() {
     var cards = [];
 	var i;
@@ -576,7 +611,7 @@ function getBids() {
     gameStatus = gameMode.BID;
     players.forEach(function(player) {
         player.bid = -1; //reset bids
-        updateUser(player.ID,"requestBid");
+        updateUser(player.ID,"requestBid",currentRound);
         player.statusColor = notReadyColor;
     });
 	console.log('{rage}', "get Bids");
@@ -822,7 +857,9 @@ function finishRound() {
         currentRound -= reduceRoundsBy;
     if( currentRound > 0) {
         startRound();
-    } else {
+    } else if(currentRound==0){
+		startZeroRound()
+	}else {
         gameEnd();
     }
 }

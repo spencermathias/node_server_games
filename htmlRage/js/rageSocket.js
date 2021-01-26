@@ -84,7 +84,8 @@ var shapes = [];
 var userList = [];
 var showBid = false;
 var spectatorColor = "#444444";
-
+var noneCard = {type: "none", owner: "none", color: "#ffffff", number: -2, ID: 0};
+var zeroRound=false
 var InputList;
 
 function updatepublic(data){
@@ -131,10 +132,17 @@ socket.on('cards', function(cards){
 	console.log('cards for round: ', myCards);
 });
 
-socket.on('requestBid', function(){
+socket.on('requestBid', function(roundNumber){
+	//TODO:put zero round flag here
 	showBid = false;
 	console.log('request bid');
-	showBidScreen(true);
+	if(roundNumber==0){
+		showBidScreen(1);
+		zeroRound=true
+	}else{
+		showBidScreen(roundNumber);
+		zeroRound=false
+	}
 	$('#bidArray').find('.bidButton').removeClass('selected');
 });
 
@@ -225,8 +233,16 @@ function checkClick(event){
 	}
 }
 
-function showBidScreen(show){
+function showBidScreen(num){
+	let show=typeof num==='number'
+	if(typeof num==='number'){
+		for( i=0; i<11; i++){
+			let bidTile='#'+i
+			$(bidTile).css('display',(i<num+1) ? 'flex' : 'none')
+		}
+	}
 	$('#bidOverlay').css('display', (show) ? 'flex' : 'none');
+	
 	resizeCanvas();
 }
 
@@ -275,16 +291,18 @@ function draw(){
 		ctx.save();
 		ctx.translate(tableCenter.x, tableCenter.y);
 		ctx.rotate(i*angle);
-		selected[player] = drawCard(ctx, selected[player]);
+		if(!zeroRound||showBid||i!=0){
+		    selected[player] = drawCard(ctx, selected[player]);
+		}
 		ctx.fillStyle = userList[player].color;
 		ctx.font = fontSize + "px Arial Black, Gadget, Arial, sans-serif";
 		offset = selected[player].width/2 + fontSize
 		//lowerAlignment = selected[player].y + selected[player].height/2 + fontSize;
 		ctx.fillText(userList[player].userName, 0, radius);
 		if(showBid === true){
-				ctx.fillText(userList[player].handsWon, offset, lowerAlignment);
-				ctx.fillText('▬', offset, lowerAlignment + fontSize/2);
-				ctx.fillText(userList[player].bid, offset, lowerAlignment + 1.2*fontSize);
+			ctx.fillText(userList[player].handsWon, offset, lowerAlignment);
+			ctx.fillText('▬', offset, lowerAlignment + fontSize/2);
+			ctx.fillText(userList[player].bid, offset, lowerAlignment + 1.2*fontSize);
 		} else {
 			ctx.fillText('0', offset, lowerAlignment);
 			ctx.fillText('▬', offset, lowerAlignment + fontSize/2);
@@ -298,7 +316,7 @@ function draw(){
 	//draw cards
 	for( i = 0; i < shapes.length; i += 1){
 		curShape = shapes[i];
-		curshape = drawCard(ctx, curShape);
+		drawCard(ctx, curShape);
 	}
 	setTimeout(draw, 100); //repeat
 }
@@ -455,7 +473,11 @@ function resizeCanvas(){
 }
 
 function resizeDrawings(){
-	shapes = drawMyCards();
+	if(!zeroRound||showBid){
+		shapes = drawMyCards();
+	}else{
+		shapes=[]
+	}
 	shapes.push(drawTrump());
 }
 
