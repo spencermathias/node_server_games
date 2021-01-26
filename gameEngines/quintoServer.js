@@ -176,7 +176,7 @@ function getPrivData(player){
 		updateUser(player.ID,'boardState', boardState);
 		updateUser(player.ID,'tiles', player.tiles);
 		updateTurnColor();
-		messageOut('all',player.userName+'has returned',serverColor)
+		messageOut('all',player.userName+' has returned',serverColor)
 }
 function removePlayer(playerIndex){
 	players.splice(playerIndex,1)
