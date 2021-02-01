@@ -144,6 +144,7 @@ socket.on('requestBid', function(roundNumber){
 		zeroRound=false
 	}
 	$('#bidArray').find('.bidButton').removeClass('selected');
+	resizeDrawings()
 });
 
 socket.on('allBidsIn', function(){
@@ -473,7 +474,7 @@ function resizeCanvas(){
 }
 
 function resizeDrawings(){
-	if(!zeroRound||!showBid){
+	if(!zeroRound||showBid){
 		shapes = drawMyCards();
 	}else{
 		shapes=[]
