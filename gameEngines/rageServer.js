@@ -113,7 +113,7 @@ var gameId = -1; //game id for database
 
 var minPlayers = 2;
 var maxPlayers = 9; //must increase card number for more players
-var numberOfRounds = 10;
+var numberOfRounds = 3;
 var reduceRoundsBy=1;
 
 var allClients = [];
