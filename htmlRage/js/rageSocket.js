@@ -473,7 +473,7 @@ function resizeCanvas(){
 }
 
 function resizeDrawings(){
-	if(!zeroRound||showBid){
+	if(!zeroRound||!showBid){
 		shapes = drawMyCards();
 	}else{
 		shapes=[]
