@@ -75,6 +75,7 @@ function MessageIn(message2server){
 				case 'cardSelected':cardSelected(players[playerIndex],data); break;
 				case 'startGame':startGame(); break;
 				case 'end':gameEnd();break;
+				case 'options':ChangeOptions(data);break
 			}
 		}else{
 			console.log('gameStatus',gameStatus)
@@ -113,19 +114,25 @@ var gameId = -1; //game id for database
 
 var minPlayers = 2;
 var maxPlayers = 9; //must increase card number for more players
-var numberOfRounds = 3;
-var reduceRoundsBy=1;
+
 
 var allClients = [];
 var players = [];
 var spectators = [];
 
-var currentRound = numberOfRounds;
+var currentRound = 10;
 var currentTurn = 0;
 var firstPlayer;
 var nextToLeadHand;
 var nextToLeadRound;
-
+var options={
+	cardsForRounds:[10,9,8,7,6,5,4,3,2,1,0],
+	cardOptions:{
+		colors:["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#FF8C00", "#ff00ff"],
+				//red       green       blue     yellow      orange     purple	
+		numPerSuit: 16
+	}
+}
 
 var cardDesc = {
     colors: ["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#FF8C00", "#ff00ff"],
@@ -358,6 +365,38 @@ function renameUser(player,userName) {
         updateUsers();
     };
 
+function ChangeOptions(data){
+	let roundnums=data.cardsForRounds.map(x=>(parseInt(x)+11)%11)
+	//check round numbers
+	if(roundnums.length === data.cardsForRounds.length && roundnums.every((value, index) => value === data.cardsForRounds[index])){
+		options.cardsForRounds=data.cardsForRounds
+		messageOut('all','Rounds will now be '+options.cardsForRounds, gameColor)
+	}else{
+		console.log('{rage}','round numbers are not valid')
+	}
+	//check card options
+	if(data.cardOptions!=undefined){//this is to validate card options 
+		if(data.cardOptions.colors!=undefined){
+			cardDesc.colors=data.cardOptions.colors
+			messageOut('all','card colors changed', gameColor)
+			messageOut('all','there are now '+cardDesc.colors.length+' colors', gameColor)
+		}
+		if(data.cardOptions.numPerSuit!=undefined){
+			cardDesc.numPerSuit=data.cardOptions.numPerSuit
+			messageOut('all','the largest number is now '+(cardDesc.numPerSuit-1), gameColor)
+		}
+	}
+	let tempmax=parseInt(cardDesc.colors.length*cardDesc.numPerSuit/Math.max(...options.cardsForRounds))
+	if(tempmax>2){
+		maxPlayers=tempmax
+	}else{
+		cardDesc.numPerSuit=Math.ceil(2*Math.max(options.cardsForRounds)/cardDesc.colors.length)
+		maxPlayers=2
+		messageOut('all','Not enough cards ', gameErrorColor)
+		messageOut('all','the largest number is now '+(cardDesc.numPerSuit-1), gameColor)
+	}
+	messageOut('all','you may now have up to '+tempmax+' players', gameColor)
+}
 
 function updateUsers() {
     console.log('{rage}',"--------------Sending New User List--------------");
@@ -430,8 +469,8 @@ function gameStart() {
 	}
 
 	
-	
-	currentRound = numberOfRounds;
+	roundNumber = 0
+	currentRound = options.cardsForRounds[roundNumber];
 	currentTurn = 0;
 	if(players.length > 0){
 		console.log('{rage}',"gameStart");
@@ -854,11 +893,14 @@ function addHandScoreToTotal(){
 }
 
 function finishRound() {
-        currentRound -= reduceRoundsBy;
-    if( currentRound > 0) {
-        startRound();
-    } else if(currentRound==0){
-		startZeroRound()
+	roundNumber+=1
+	if (roundNumber<options.cardsForRounds.length){
+		currentRound = options.cardsForRounds[roundNumber];
+		if(currentRound==0){
+			startZeroRound()
+		}else{
+			startRound();
+		}
 	}else {
         gameEnd();
     }
