@@ -493,7 +493,11 @@ function gameStart() {
 		updateBoard('all', readyTitleColor, true);
 		updateUsers();
 		nextToLeadRound = Math.floor(Math.random()*players.length); //random starting person
-		startRound();
+		if(currentRound==0){
+			startZeroRound()
+		}else{
+			startRound();
+		}
 	}
 }
 
@@ -874,7 +878,7 @@ function tallyScoreFromHand(){
 		if( player.handsWon.length != player.bid){
 			score += missedBidPenalty;
 		} else {
-			if(player.bid == currentRound){
+			if(player.bid == currentRound && currentRound!=0){
 				score += currentRound*gotBidBonus;
 			} else {
 				score += gotBidBonus;
