@@ -158,6 +158,10 @@ io.sockets.on("connection", function(socket) {
 				newgame='pitServer.js'
 				connectorSocket=pitConnect
 			break;
+			case 'Racko':
+				newgame='rackoServer.js'
+				connectorSocket=rackoConnect
+			break;
 			case 'Debug':
 				if(allforked['temp']){
 					delete allforked['temp']
@@ -339,6 +343,9 @@ var quintoConnect=io.of('/quintoConnect/').on('connection',connectionFunction)
 
 app.use('/PitConnect',express.static('./htmlPit'))
 var pitConnect=io.of('/pitConnect/').on('connection',connectionFunction)
+
+app.use('/rackoConnect',express.static('./htmlRacko'))
+var rackoConnect=io.of('/rackoConnect/').on('connection',connectionFunction)
 
 app.use('/mooseConnect',express.static('./htmlMooseMt'))
 var mooseConnect=io.of('/mooseConnect/').on('connection',connectionFunction)
