@@ -225,6 +225,7 @@ function checkWin(player){
 			
 			if(runs > 0){
 				messageOut('all','The winner is ' + player.userName +'!',gameColor)
+				player.score+=25
 				gameEnd();
 			}else{
 				senderror(player.ID,'To win the game you must have at least one run of 3');
@@ -288,18 +289,19 @@ function getFaceDown(player){
 		}
 	}
 }
+
 function gameEnd() {
     //console.log(__line,"gameEnd");
     updateBoard('all', notReadyTitleColor, false);
-	
+	countPoints()
 	messageOut('all', "THE GAME HAS ENDED", gameColor);
-	//messageOut('all', "Scores: ", gameColor);
-	//let total = 0;
-	// for( var i = 0; i < players.length; i += 1){
-		// messageOut('all', players[i].userName + ": " + players[i].score + "\n", gameColor);
-		// total += players[i].score;
-	// }
-	//messageOut('all', "Total score: " + total, gameColor);
+	messageOut('all', "Scores: ", gameColor);
+	let total = 0;
+	for( var i = 0; i < players.length; i += 1){
+		messageOut('all', players[i].userName + ": " + players[i].score + "\n", gameColor);
+		total += players[i].score;
+	}
+	messageOut('all', "Total score: " + total, gameColor);
 	
 	
 	
@@ -311,6 +313,41 @@ function gameEnd() {
     updateUsers();
 }
 
+function countPoints(){
+	let maxScore=0
+	for(j=0;j<players.length;j++){
+		var tilesCorect = 1;
+		//console.log(__line,player);
+		let playersTiles = players[j].tiles;
+		direction = Math.sign(playersTiles[1].number-playersTiles[0].number)
+		//console.log(__line, direction)
+		for(var i = 0; i < playersTiles.length - 1;i++){
+			//console.log(__line,playersTiles[i].number*direction,playersTiles[i + 1].number*direction)
+			if(playersTiles[i].number*direction < playersTiles[i + 1].number*direction){
+				tilesCorect++;
+			}else{
+				break;
+			}
+		}
+		//console.log(tilesCorect)
+		players[j].score+=tilesCorect*5
+		var runs = 0;
+
+		for(let a = 0;a < tilesCorect - 2;a++){
+			if(playersTiles[a].number + 1*direction == playersTiles[a + 1].number){
+				if(playersTiles[a].number + 2*direction == playersTiles[a + 2].number){
+					runs++;
+				}
+			}
+		}
+		//console.log(runs)
+		if(runs){
+			players[j].score+=Math.pow(2,runs)*25
+		}
+		maxScore=Math.max(maxScore,players[j].score)
+	}
+	return maxScore
+}
 //comunication functions
 function updateUsers(){
 	console.log('{quinto}',"--------------Sending New User List--------------");
@@ -330,6 +367,7 @@ function getUserSendData(client){
 	return{
 		id: client.ID,
 		userName: client.userName,
+		score:client.score,
 		color: client.statusColor,
 	};
 }
@@ -429,7 +467,7 @@ function findPileToPickFrom(){
 		if(pilesForGame[y].length != 0){
 			posiblePiles.push(y);
 		}
-		console.log('{racko}',pilesForGame[y]);
+		//console.log('{racko}',pilesForGame[y]);
 	}
 	console.log('{racko}',posiblePiles);
 	if(posiblePiles.length == 0){

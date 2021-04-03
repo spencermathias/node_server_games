@@ -62,7 +62,7 @@ function titleFunction(){
 }
 
 var soundsAllowed = false;
-var ding = new Audio('../sounds/echoed-ding.mp3');
+var ding = new Audio('./sounds/echoed-ding.mp3');
 function allowAudio(){
 	if (!soundsAllowed){
 		ding.load();
@@ -129,7 +129,7 @@ class Button {
 }
 
 class Card extends Button{
-	constructor(xpercent,ypercent,text,originalPile){
+	constructor(xpercent,ypercent,text,originalPile,rackNumber=false){
 		super(undefined,undefined,undefined,undefined,text,'White','Black','Black','White',20,false);
 		this.xpercent = xpercent;
 		this.ypercent = ypercent;
@@ -137,6 +137,7 @@ class Card extends Button{
 		this.updateSize(xpercent,ypercent);
 		this.totalcolors = 3;
 		this.visible = true;
+		this.rackNumber=rackNumber
 	}
 	updateSize(xpercent,ypercent){
 		let width = undefined;
@@ -166,7 +167,7 @@ class Card extends Button{
 				if(this.text >= 40){
 					ctx.fillStyle = '#ff0000';
 				}else{
-					ctx.fillStyle = '#ffdf00';
+					ctx.fillStyle = '#dfaf00';
 				}
 			}
 			ctx.font = '' + this.fontSize + "px Arimo" //Arial Black, Gadget, Arial, sans-serif";
@@ -174,10 +175,11 @@ class Card extends Button{
 			ctx.strokeStyle = this.textOutlineColor;
 			ctx.translate(this.x, this.y);
 			if(this.textColor != undefined){
-				ctx.fillText(this.text,(this.width - 8)/60*this.text - this.width/2,-(this.height/20 * 7));
+				ctx.fillText(this.text,(this.width)/80*this.text - this.width/2.5,-(this.height/20 * 7));
 			}
-			if(this.textOutline != undefined){
-				ctx.strokeText(this.text, 0, 0);
+			ctx.fillStyle = '#000000';
+			if(this.rackNumber){
+				ctx.fillText(this.rackNumber,-1.2*this.width/2,-(this.height/20 * 7))
 			}
 			ctx.restore();
 		}
@@ -306,7 +308,7 @@ socket.on('userList',function(data){
 		var ender = '</div>';
 		
 		if(data[i].color != spectatorColor){
-			//string = string + " " + data[i].score;
+			string = string + " " + data[i].score;
 			
 			if(data[i].id == socket.id){
 				if(soundsAllowed && !myTurn && data[i].color == yourTurnColor){
@@ -346,15 +348,16 @@ socket.on('userList',function(data){
 
 socket.on('cards',function(yourCards){
 	myTilesThatISomtimesLove = [];
-	for (var i = 0;i < yourCards.length;i++){
+	for (var i = 0;i<yourCards.length;i++){
 		var card = new Card(
 			50,
-			100/yourCards.length * i, 
+			(yourCards.length-i-1)/yourCards.length*100, 
 			yourCards[i].number,
-			yourCards[i].originalPile
+			yourCards[i].originalPile,
+			(1+i)*5
 		);
 		console.log(card.clickArea.minX);
-		myTilesThatISomtimesLove.push(card);
+		myTilesThatISomtimesLove.unshift(card);
 		card.visible = true;
 	}
 	console.log(myTilesThatISomtimesLove);
