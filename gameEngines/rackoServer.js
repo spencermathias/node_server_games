@@ -91,6 +91,7 @@ var cardPlayedOnTopOf = [];
 var pile = [];
 var pilesForGame = [];
 var pilesNeeded = 0;
+var winScore = 500
 
 var players = [];
 var userList=[]
@@ -226,9 +227,14 @@ function checkWin(player){
 			if(runs > 0){
 				messageOut('all','The winner is ' + player.userName +'!',gameColor)
 				player.score+=25
-				gameEnd();
+				let maxScore=countPoints()
+				if (maxScore>winScore){
+					gameEnd();
+				}else{
+					startRound()
+				}
 			}else{
-				senderror(player.ID,'To win the game you must have at least one run of 3');
+				senderror(player.ID,'To win the round you must have at least one run of 3');
 			}
 		}
 	}else{
@@ -293,7 +299,7 @@ function getFaceDown(player){
 function gameEnd() {
     //console.log(__line,"gameEnd");
     updateBoard('all', notReadyTitleColor, false);
-	countPoints()
+	
 	messageOut('all', "THE GAME HAS ENDED", gameColor);
 	messageOut('all', "Scores: ", gameColor);
 	let total = 0;
@@ -413,23 +419,24 @@ function gameStart() {
 	
 	pilesNeeded = Math.ceil(((players.length * 10) + 2)/60);
 	pushPilesNeeded(pilesNeeded);
-	cardsInFaceUpPile.push(dealSingleTile());
+	
 	//console.log(__line,pilesNeeded);
 	
 	updateBoard('all', readyTitleColor, true);
-	//console.log(__line,'p',players.length);
-	//console.log(__line, "cards", pile) ;
-	//console.log(__line, "cards",players[0].tiles);
+	startRound()
+	
+
+	
+}
+function startRound(){
+	cardsInFaceUpPile.push(dealSingleTile());
 	players.forEach(function (player){
+		player.tiles=[]
 		dealTiles(player,10);
 		updateUser(player.ID,'cards',player.tiles);
 	});
 	updateUser('all','centerCard',cardsInFaceUpPile[0])
-	//sendTilesToAllPlayers(players); cheack
-	//console.log(__line, "cards", tiles);
-	//console.log(__line, "allTiles", allTiles);
 	updateUsers();
-
 	//wait for turn plays
 	nextTurn()
 }
