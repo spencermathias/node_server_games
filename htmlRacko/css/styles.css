@@ -24,7 +24,7 @@ body {
 }
 
 #middle {
-	height:100vh;
+	height:100%;
 	display: flex;
 	flex-direction: row;
 }
@@ -47,7 +47,8 @@ body {
 #gameBoard {
 	display: none; /* none */
 	/* cursor: default; */
-	/* border:1px solid #ffffff; */
+	/*border:1px solid #ff0000; */
+	height: 100vh;
 }
 
 #sidebar {
@@ -57,6 +58,7 @@ body {
 	padding: 5px;
 	color: #FFFFFF;
 	background: #888888;
+	flex-direction:column;
 }
 
 * { /* keeps boxes from being bigger than they are*/
@@ -92,11 +94,15 @@ body {
 }
 
 #users{
+	display: flex;
 	height: 20vh;
+	flex-flow: column;
 }
 
 #userlist{
-	height:100%;
+	flex-grow:1;
+	display:flex;
+	flex-flow: column;
 	overflow-y: hidden;
 }
 
@@ -105,12 +111,21 @@ body {
 }
 
 #chat{
-	height: 75vh;
+	height:75%;
+	display: flex;
+	flex-flow: column;
 }
 
 #chatlog{
 	overflow-y: hidden;
-	height: 100%;
+	flex-grow : 1;
+	flex-flow:column;
+}
+
+#chatinput{
+	display:flex;
+	flex-flow:column;
+	flex-grow:1;
 }
 
 #chatlog:hover{
