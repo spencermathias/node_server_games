@@ -161,7 +161,8 @@ function getPrivData(player){
         updateBoard(player.ID, player.ready, gameStatus!=gameMode['LOBBY']);
 		//updateUser(player.ID,"allTiles", allTiles);
 		//updateUser(player.ID,'boardState', boardState);
-		updateUser(player.ID,'tiles', player.tiles);
+		updateUser(player.ID,'cards', player.tiles);
+		
 		updateTurnColor();
 		messageOut('all',player.userName+' has returned',serverColor)
 }
@@ -429,6 +430,9 @@ function gameStart() {
 	
 }
 function startRound(){
+	pilesForGame=[]
+	pilesNeeded = Math.ceil(((players.length * 10) + 2)/60);
+	pushPilesNeeded(pilesNeeded);
 	cardsInFaceUpPile.push(dealSingleTile());
 	players.forEach(function (player){
 		player.tiles=[]
@@ -436,6 +440,7 @@ function startRound(){
 		updateUser(player.ID,'cards',player.tiles);
 	});
 	updateUser('all','centerCard',cardsInFaceUpPile[0])
+	
 	updateUsers();
 	//wait for turn plays
 	nextTurn()

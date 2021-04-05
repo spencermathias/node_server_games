@@ -90,6 +90,7 @@ class Button {
 		this.visible = true;
 	}
 	
+	// center oriented
 	updateSize(x,y,width,height){
 		this.x = x;
 		this.y = y;
@@ -129,19 +130,15 @@ class Button {
 }
 
 class Card extends Button{
-	constructor(xpercent,ypercent,text,originalPile,rackNumber=false){
+	constructor(text,originalPile,rackNumber=false){
 		super(undefined,undefined,undefined,undefined,text,'White','Black','Black','White',20,false);
-		this.xpercent = xpercent;
-		this.ypercent = ypercent;
 		this.originalPile = originalPile;
-		this.updateSize(xpercent,ypercent);
+		//this.updateSize(xpercent,ypercent);
 		this.totalcolors = 3;
 		this.visible = true;
 		this.rackNumber=rackNumber
 	}
-	updateSize(xpercent,ypercent){
-		let width = undefined;
-		let height = undefined;
+	/*updateSize(x,y, width, height){
 		if (canvas.width/canvas.height > 1.25){
 			width = Math.min(canvas.width/3.5,canvas.height * 1.2 / 5);
 			height = width/1.3
@@ -153,7 +150,7 @@ class Card extends Button{
 		let y = ypercent * (canvas.height - height)/100 + height/2;
 		this.clickArea = {minX: x - width/2, minY: y - height/2, maxX: x + width/2, maxY: y + height/2};
 		super.updateSize(x,y,width,height);
-	}
+	}*/
 	draw(ctx){
 		if(this.visible){
 			ctx.save();
@@ -205,22 +202,22 @@ class PickFromPile extends Button{
 	constructor(x,y,text){
 		let width = undefined;
 		let height = undefined;
-		if (canvas.width/canvas.height > 1.25){
+		/*if (canvas.width/canvas.height > 1.25){
 			width = Math.min(canvas.width/3.5,canvas.height * 1.2 / 5);
 			height = width/1.3;
 		}else{
 			width = Math.min(canvas.width/2.5,canvas.height * 1.2 / 10);
 			height = width/1.3;
-		}
+		}*/
 		super(x,y,width,height,text,'Green','Black','Black',undefined,15)
-		this.x = x;
-		this.y = y;
-		this.text = text;
-		this.clickArea = {minX: x - width/2, minY: y - height/2, maxX: x + width/2, maxY: y + height/2};
+		//this.x = x;
+		//this.y = y;
+		//this.text = text;
+		//this.clickArea = {minX: x - width/2, minY: y - height/2, maxX: x + width/2, maxY: y + height/2};
 		this.selected = false;
 	}
 	
-	draw(){
+	/*draw(){
 		if(this.visible){
 			ctx.save();
 			ctx.fillStyle = this.fillColor;
@@ -243,7 +240,7 @@ class PickFromPile extends Button{
 			}
 			ctx.restore();
 		}
-	}
+	}*/
 	
 	click(){
 		socket.emit('gameCommands',{command:'get from face down'});
@@ -253,6 +250,7 @@ class PickFromPile extends Button{
 }
 
 var submitButton = new SubmitButton();
+var pickFromPile = new PickFromPile(canvas.width/3,canvas.width/2,'take face down');
 var myTilesThatISomtimesLove = [];
 var shapes = [[],[],[]];
 var myTurn = false;
@@ -350,8 +348,6 @@ socket.on('cards',function(yourCards){
 	myTilesThatISomtimesLove = [];
 	for (var i = 0;i<yourCards.length;i++){
 		var card = new Card(
-			50,
-			(yourCards.length-i-1)/yourCards.length*100, 
 			yourCards[i].number,
 			yourCards[i].originalPile,
 			(1+i)*5
@@ -360,6 +356,7 @@ socket.on('cards',function(yourCards){
 		myTilesThatISomtimesLove.unshift(card);
 		card.visible = true;
 	}
+	resizeDrawings();//recalculate card size and position // REFACTOR ABOVE
 	console.log(myTilesThatISomtimesLove);
 	console.log(tilesDiscarded);
 	console.log('got new data');
@@ -368,7 +365,8 @@ socket.on('cards',function(yourCards){
 socket.on('centerCard',function(cardYouSee){
 	console.log(cardYouSee.number);
 	if(cardYouSee != undefined){
-		tilesDiscarded = new Card(75,50,cardYouSee.number,cardYouSee.originalPile);
+		tilesDiscarded = new Card(cardYouSee.number,cardYouSee.originalPile);
+		resizeDrawings();
 	}
 })
 
@@ -388,14 +386,34 @@ socket.on("message",function(message){
 	//$('#chatlog').scroll();
 	$('#chatlog').animate({scrollTop: 1000000});
 });
-var pickFromPile = new PickFromPile(canvas.width/3,canvas.width/2,'take face down');
+
 //functions
 
+
+function resizeCanvasToDisplaySize(canvas) {
+   // look up the size the canvas is being displayed
+   const width = canvas.clientWidth;
+   const height = canvas.clientHeight;
+
+   // If it's resolution does not match change it
+   if (canvas.width !== width || canvas.height !== height) {
+     canvas.width = width;
+     canvas.height = height;
+     return true;
+   }
+
+   return false;
+}
+
 function resizeCanvas(){
-	canvas.width = window.innerWidth - $('#sidebar').width() - 50;
-	canvas.height = window.innerHeight - 2;
+	resizeCanvasToDisplaySize(canvas);
+	
+	//canvas.width = window.innerWidth - $('#sidebar').width() - 50;
+	//canvas.height = window.innerHeight - 2;
 	console.log('canvas resized to: ', canvas.width, canvas.height);
 	resizeDrawings();
+	
+	// MISSING submit button in android!!!!!! (hiddenbehind navigation bar????!!!!!!!!!!!!!!!!
 }
 
 function resizeDrawings(){
@@ -406,17 +424,35 @@ function resizeDrawings(){
 	board.y = canvas.height/2;
 	board.rowThickness = tileHeight + 2*tilePadding;
 	board.columnThickness = tileWidth + 2*tilePadding;*/
+	let cardAspect = 1.3; //card aspect ratio. starts over lap if not met
+	
+	let leftColX = canvas.width/3;
+	let rightColX = canvas.width*2/3;
+	
+	submitButton.updateSize(canvas.width/2, canvas.height-30, canvas.width, tileHeight);
+	
+	let totalCardHeight = canvas.height - submitButton.height*1.5; //the submit button exceeds its bounds
+	
+	let cardWidth = Math.min(canvas.width/3, canvas.height/3);
+	let cardHeight = cardWidth/cardAspect;
+	
+	let cardStartY = cardHeight/2; //submitButton.height+cardHeight/2;
+	let cardDelta = (totalCardHeight-cardHeight)/(myTilesThatISomtimesLove.length-1);
 	
 	for(var i = 0; i < myTilesThatISomtimesLove.length; i++){
-		myTilesThatISomtimesLove[i].updateSize(myTilesThatISomtimesLove[i].xpercent,myTilesThatISomtimesLove[i].ypercent);
+		//x,y,width,height
+		myTilesThatISomtimesLove[i].updateSize(leftColX, cardStartY + i*cardDelta, cardWidth, cardHeight);
 	}
-	submitButton.updateSize(canvas.width/2, canvas.height-30, canvas.width, tileHeight);
+	
 	if(myTilesThatISomtimesLove.length != 0){
-		pickFromPile.updateSize(canvas.width/4,canvas.width/4,myTilesThatISomtimesLove[0].width/2,myTilesThatISomtimesLove[0].height/2);
+		pickFromPile.updateSize(rightColX, (totalCardHeight/2)+cardHeight/2, cardWidth, cardHeight);
 	}
+	
 	if(tilesDiscarded != undefined){
-		tilesDiscarded.updateSize(tilesDiscarded.xpercent,tilesDiscarded.ypercent);
+		tilesDiscarded.updateSize(rightColX, (totalCardHeight/2)-cardHeight/2, cardWidth, cardHeight);
 	}
+	
+	window.scrollTo(0, 1); //hide android navigation bar
 }
 
 function changeName(userId){
