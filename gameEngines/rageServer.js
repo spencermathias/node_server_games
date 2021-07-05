@@ -76,6 +76,7 @@ function MessageIn(message2server){
 				case 'startGame':startGame(); break;
 				case 'end':gameEnd();break;
 				case 'options':ChangeOptions(data);break
+				case 'getRules': updateUser(playerID,"recievedRules", {maxPlayers,minPlayers,options,currentRound});break
 			}
 		}else{
 			console.log('gameStatus',gameStatus)
@@ -127,26 +128,20 @@ var nextToLeadHand;
 var nextToLeadRound;
 var options={
 	cardsForRounds:[10,9,8,7,6,5,4,3,2,1,0],
-	cardOptions:{
-		colors:["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#FF8C00", "#ff00ff"],
-				//red       green       blue     yellow      orange     purple	
-		numPerSuit: 16
+	cardDesc : {
+		colors: ["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#FF8C00", "#ff00ff"],
+				  //red       green       blue     yellow      orange     purple
+		numPerSuit: 16,
+		wordCardColor: "#000000",
+		wordCardIdentifyer: -1,
+		noneColor: "#ffffff",
+		noneCardIdentifyer: -2,
+		outs: 4,
+		changes: 4,
+		wilds: 0,
+		minus: 2,
+		plus: 2
 	}
-}
-
-var cardDesc = {
-    colors: ["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#FF8C00", "#ff00ff"],
-              //red       green       blue     yellow      orange     purple
-    numPerSuit: 16,
-    wordCardColor: "#000000",
-    wordCardIdentifyer: -1,
-    noneColor: "#ffffff",
-    noneCardIdentifyer: -2,
-    outs: 4,
-    changes: 4,
-    wilds: 0,
-    minus: 2,
-    plus: 2
 };
 
 var gameMode = {
@@ -171,7 +166,7 @@ var spectatorColor = "#444444";
 var notYourTurnColor = "#ffffff";
 var yourTurnColor = "#0000ff";
 
-var noneCard = {type: "none", owner: "none", color: cardDesc.noneColor, number: cardDesc.noneCardIdentifyer, ID: 0};
+var noneCard = {type: "none", owner: "none", color: options.cardDesc.noneColor, number: options.cardDesc.noneCardIdentifyer, ID: 0};
 var ledCard = noneCard;
 
 var deck = [];
@@ -377,26 +372,27 @@ function ChangeOptions(data){
 	//check card options
 	if(data.cardOptions!=undefined){//this is to validate card options 
 		if(data.cardOptions.colors!=undefined){
-			cardDesc.colors=data.cardOptions.colors
+			options.cardDesc.colors=data.cardOptions.colors
 			messageOut('all','card colors changed', gameColor)
-			messageOut('all','there are now '+cardDesc.colors.length+' colors', gameColor)
+			messageOut('all','there are now '+options.cardDesc.colors.length+' colors', gameColor)
 		}
 		if(data.cardOptions.numPerSuit!=undefined){
-			cardDesc.numPerSuit=data.cardOptions.numPerSuit
-			messageOut('all','the largest number is now '+(cardDesc.numPerSuit-1), gameColor)
+			options.cardDesc.numPerSuit=data.cardOptions.numPerSuit
+			messageOut('all','the largest number is now '+(options.cardDesc.numPerSuit-1), gameColor)
 		}
 	}
-	let tempmax=parseInt(cardDesc.colors.length*cardDesc.numPerSuit/Math.max(...options.cardsForRounds))
+	let tempmax=parseInt(options.cardDesc.colors.length*options.cardDesc.numPerSuit/Math.max(...options.cardsForRounds))
 	if(tempmax>2){
 		maxPlayers=tempmax
 	}else{
-		cardDesc.numPerSuit=Math.ceil(2*Math.max(options.cardsForRounds)/cardDesc.colors.length)
+		options.cardDesc.numPerSuit=Math.ceil(2*Math.max(options.cardsForRounds)/options.cardDesc.colors.length)
 		maxPlayers=2
 		messageOut('all','Not enough cards ', gameErrorColor)
-		messageOut('all','the largest number is now '+(cardDesc.numPerSuit-1), gameColor)
+		messageOut('all','the largest number is now '+(options.cardDesc.numPerSuit-1), gameColor)
 	}
 	messageOut('all','you may now have up to '+tempmax+' players', gameColor)
 }
+
 
 function updateUsers() {
     console.log('{rage}',"--------------Sending New User List--------------");
@@ -571,25 +567,25 @@ function makeDeck() {
 	var i;
 	var j;
 	var cardId = 1; //noneCard is id 0
-    for (i = 0; i < cardDesc.colors.length; i+=1) {
-        for (j = 0; j < cardDesc.numPerSuit; j+=1) {
-            cards.push({type: "number", owner: "deck", color: cardDesc.colors[i], number: j, ID: cardId++});
+    for (i = 0; i < options.cardDesc.colors.length; i+=1) {
+        for (j = 0; j < options.cardDesc.numPerSuit; j+=1) {
+            cards.push({type: "number", owner: "deck", color: options.cardDesc.colors[i], number: j, ID: cardId++});
         }
     }
-    for (i = 0; i < cardDesc.outs; i+=1) {
-        cards.push({type: "out", owner: "deck", color: cardDesc.wordCardColor, number: cardDesc.wordCardIdentifyer, ID: cardId++});
+    for (i = 0; i < options.cardDesc.outs; i+=1) {
+        cards.push({type: "out", owner: "deck", color: options.cardDesc.wordCardColor, number: options.cardDesc.wordCardIdentifyer, ID: cardId++});
     }
-    for (i = 0; i < cardDesc.changes; i+=1) {
-        cards.push({type: "change", owner: "deck", color: cardDesc.wordCardColor, number: cardDesc.wordCardIdentifyer, ID: cardId++});
+    for (i = 0; i < options.cardDesc.changes; i+=1) {
+        cards.push({type: "change", owner: "deck", color: options.cardDesc.wordCardColor, number: options.cardDesc.wordCardIdentifyer, ID: cardId++});
     }
-    for (i = 0; i < cardDesc.wilds; i+=1) {
-        cards.push({type: "wild", owner: "deck", color: cardDesc.wordCardColor, number: cardDesc.wordCardIdentifyer, ID: cardId++});
+    for (i = 0; i < options.cardDesc.wilds; i+=1) {
+        cards.push({type: "wild", owner: "deck", color: options.cardDesc.wordCardColor, number: options.cardDesc.wordCardIdentifyer, ID: cardId++});
     }
-    for (i = 0; i < cardDesc.plus; i+=1) {
-        cards.push({type: "plus", owner: "deck", color: cardDesc.wordCardColor, number: cardDesc.wordCardIdentifyer, ID: cardId++});
+    for (i = 0; i < options.cardDesc.plus; i+=1) {
+        cards.push({type: "plus", owner: "deck", color: options.cardDesc.wordCardColor, number: options.cardDesc.wordCardIdentifyer, ID: cardId++});
     }
-    for (i = 0; i < cardDesc.minus; i+=1) {
-        cards.push({type: "minus", owner: "deck", color: cardDesc.wordCardColor, number: cardDesc.wordCardIdentifyer, ID: cardId++});
+    for (i = 0; i < options.cardDesc.minus; i+=1) {
+        cards.push({type: "minus", owner: "deck", color: options.cardDesc.wordCardColor, number: options.cardDesc.wordCardIdentifyer, ID: cardId++});
     }
     //console.log('{rage}', "card length:", cards.length);
     return cards;
@@ -633,8 +629,8 @@ function chooseTrumpCard(cards) {
         attempt += 1;
         if ( attempt > 1000 ) { //give up if no number cards
             cardReturnToDeck(trumpCard, cards);
-            index = Math.floor(Math.random() * (cardDesc.colors.length));
-            trumpCard = {type: "number", owner: "deck", color: cardDesc.colors[index], number: cardDesc.numPerSuit, ID: -1};
+            index = Math.floor(Math.random() * (options.cardDesc.colors.length));
+            trumpCard = {type: "number", owner: "deck", color: options.cardDesc.colors[index], number: options.cardDesc.numPerSuit, ID: -1};
         }
     }
     sendTrumpToPlayers(trumpCard);

@@ -14,12 +14,64 @@
 		<div class = 'container'>
 			<div id="middle">
 				<div id='gameAndOverlay' >
-					<div id="myModal" class="modal">
+					<div id="myModal" class="modal" onclick="closeModal()">
 						<!-- Modal content -->
-						<div class="modal-content">
-							<span class="close">&times;</span>
-							<p>rules</p>
-							<iframe src="rules.html" title="rules" width="100%" height="90%"></iframe>
+						<div class="modal-content" onclick="stopclick(event)">
+							<span class="close" onclick="closeModal()">&times;</span>
+							<p>Rules</p>
+							<p><b>Number of players</b> <p id='playercount'>2-9</p></p>
+							<p><b>Cards in Play:</b>These are one card of each of the colors in play starting with the highest number in play </p>
+							<canvas id='cardsInPlay'></canvas>
+							<p><b>Object:</b>Be the player with the highest score by accurately bidding on the number of tricks you will
+							win per round</p>
+							<p><b>Dealing:</b>Each round may have a different number of cards in your hand. The following table shows the round number and
+							the number of cards you will have</p>
+							<table id=myTable>
+								<thead>
+									<tr>
+										<th>Round Number</th>
+										<th>Number of cards</th>
+									</tr>
+								</thead>
+								<tbody></tbody>
+							</table>
+							<div id='zeroRoundrules'><p> In the rounds that say 0 cards all of the other players cards are shown to you and your
+							own card is hidden. You get to make your bid using this information </p></div>
+							<p><b>Bidding:</b> After looking at your cards consider how many tricks you will take. select this number from
+							in the top section.</p>
+							<p><b>Play:</b></p>
+							<nav id="play"><ol>
+								<li>The player indicated in the chat window as leading the round selects a card from their hand. 
+								This card will move to the table infront of the player and all other players will see it. Play passes to 
+								the next player indicated by their name changing color. for example <b id='name1'>player1</b> changes to <i id='name2'>player2</i>.</p></li>
+								<li><p>Each player MUST follow suit in turn. If it is not posible to follow suit the player may play any card 
+								from their hand including a trump or action card</li>
+								<li>When all the players have played one card the trick is complete. The trick is won by the highest numbered
+								card of thelead suit. But if any trump cards are played in the trick the trick has been trumped and the highest
+								trump card wins the trick.</li>
+								<li>The player who wins the trick starts the next trick by leading with a card form their hand.</li></ol>
+							<p><i>(Note: The first card of a trick may be an action card. The next card played is then considered the lead 
+							card if it is also an action card lead card is passed on until a card is played that has a color this color is 
+							the color lead and all the rest of the players must follow this suit. if all cards in the trick are action cards
+							the trick is thrown out and no one gets the trick and the person who started the previous trick leads the next 
+							trick.) </i></p>
+							</nav>
+							<p><b>Scoring:</b>your score is shown by your name. it is updated in real time. For each trick that you take you 
+							recive 1 Point. If you have your bid then you recieve a bonus 10 points. If you have currently have less than the
+							amount that you bid you do not get the bonus points and get a -5 point penalty. If you get more tricks than you 
+							bid you loose the bonus 10 points and also get the -5 penalty</p>
+							<button id="changeRule">adjust rules</button>
+						</div>
+					</div>
+					<div id="optionsEditor" class="modal" onclick="closeModal">
+						<div class="modal-content" onclick="stopclick(event)">
+							<span class="close" onclick="closeModal()">&times;</span>
+							<p><b>Options</b></p>
+							<p>input the highest number for the deck of cards</p>
+							<input type="number" value=15></input>
+							<p>color</p>
+							<input type ="color"></input>
+							
 						</div>
 					</div>
 					<div id='bidOverlay'>

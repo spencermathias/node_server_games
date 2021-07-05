@@ -52,6 +52,9 @@ function changeName(userId){
 		socket.emit("userName", localStorage.userName);
 	}
 }
+function updateRules(){
+	socket.emit('gameCommands',{command:'getRules'})
+}
 var modal = document.getElementById("myModal");
 
 // Get the button that opens the modal
@@ -62,20 +65,36 @@ var span = document.getElementsByClassName("close")[0];
 
 // When the user clicks the button, open the modal 
 btn.onclick = function() {
+  updateRules()
   modal.style.display = "block";
 }
 
 // When the user clicks on <span> (x), close the modal
-span.onclick = function() {
+function closeModal() {
+  console.log("clicked off")
   modal.style.display = "none";
+  optionsEditor.style.display = "none"
 }
 
 // When the user clicks anywhere outside of the modal, close it
+/*
 window.onclick = function(event) {
   if (event.target == modal) {
     modal.style.display = "none";
+	optionsEditor.style.display = "none"
   }
 }
+*/
+var optionsEditor = document.getElementById("optionsEditor");
+var adjustBtn=document.getElementById("changeRule");
+adjustBtn.onclick=function(event){
+	event.stopPropagation()
+	modal.style.display = "none";
+	optionsEditor.style.display= "block"
+	
+}
+function stopclick(event){event.stopPropagation()}
+
 /*Initializing the connection with the server via websockets */
 var myCards = [];
 var trumpCard = {};
@@ -87,6 +106,7 @@ var spectatorColor = "#444444";
 var noneCard = {type: "none", owner: "none", color: "#ffffff", number: -2, ID: 0};
 var zeroRound=false
 var InputList;
+var currentRound=undefined
 
 function updatepublic(data){
 	var userListString = '';
@@ -170,6 +190,56 @@ socket.on('playerLeadsRound', function(playerLeads){
 	}
 	resizeCanvas();
 });
+socket.on('recievedRules', function(data){
+	//change number of players
+	$('#playercount').text(''+data.minPlayers+'-'+data.maxPlayers)
+	//show example cards
+	let maxNum=data.options.cardDesc.numPerSuit
+	let colors=data.options.cardDesc.colors
+	currentRound=data.currentRound
+	rowsOfNumCards=[]
+	numberCards=[]
+	exampleCards=[]
+	for(i=0;i<colors.length;i++){
+		numberCard={type:"number",color:colors[i],number:((maxNum-1-i)%maxNum+maxNum)%maxNum}
+		numberCards.push(numberCard)
+		if((i)%6==5){
+			rowsOfNumCards.push(numberCards)
+			numberCards=[]
+		}
+	}
+	if(numberCards.length!=0){
+		rowsOfNumCards.push(numberCards)
+		numberCards=[]
+	}
+	
+	cardCanvas.width=cardCanvas.clientWidth;
+	cardCanvas.height=cardCanvas.clientWidth*1.3/6*(rowsOfNumCards.length);
+	
+	for(i=0;i<rowsOfNumCards.length;i++){
+		exampleCards=exampleCards.concat(drawMyCards(rowsOfNumCards.length-i-1,6,rowsOfNumCards[i],cardCanvas,(100/rowsOfNumCards.length)))
+	}
+	console.log(data)
+	for(i =0; i<exampleCards.length; i++){
+		drawCard(cardsInPlay,exampleCards[i])
+	}
+	//show round numbers
+	$("#myTable > tbody").empty();
+	let tableString=""
+	let show0round=false
+	for(let i=0;i<data.options.cardsForRounds.length;i++){
+		tableString+="<tr><td>"+i+"</td><td>"+data.options.cardsForRounds[i]+"</td></tr>"
+		if(data.options.cardsForRounds[i]==0){
+			show0round=true
+		}
+	}
+	$('#myTable > tbody:last-child').append(tableString);
+	if(show0round){
+		$('#zeroRoundrules').css('display', 'flex')
+	}else{
+		$('#zeroRoundrules').css('display', 'none')
+	}
+});
 
 $('#submit').click(function(){ /*listening to the button click using Jquery listener*/
 	var data = { /*creating a Js ojbect to be sent to the server*/ 
@@ -252,10 +322,10 @@ var canvas = document.getElementById("gameBoard");
 ctx = canvas.getContext("2d");
 //console.log('ctx', ctx);
 //console.log(canvas.width, canvas.height);
+var cardCanvas = document.getElementById("cardsInPlay");
+cardsInPlay = cardCanvas.getContext("2d");
 
 function draw(){
-	ctx.textAlign="center";
-	ctx.textBaseline = "middle";
 	//console.log('draw: ', shapes );
 	ctx.clearRect(0,0,canvas.width, canvas.height);
 	
@@ -297,6 +367,8 @@ function draw(){
 		}
 		ctx.fillStyle = userList[player].color;
 		ctx.font = fontSize + "px Arial Black, Gadget, Arial, sans-serif";
+		ctx.textAlign="center";
+		ctx.textBaseline = "middle";
 		offset = selected[player].width/2 + fontSize
 		//lowerAlignment = selected[player].y + selected[player].height/2 + fontSize;
 		ctx.fillText(userList[player].userName, 0, radius);
@@ -325,6 +397,7 @@ function draw(){
 draw();
 
 function drawCard(ctx, curShape){
+	ctx.save();
 	ctx.strokeStyle = curShape.outline;
 	ctx.fillStyle = curShape.color;
 	roundRect(
@@ -345,9 +418,11 @@ function drawCard(ctx, curShape){
 	}
 	//draw number
 	ctx.font = '' + curShape.fontSize + "px Arial Black, Gadget, Arial, sans-serif";
+	ctx.textBaseline = "middle"
+	ctx.textAlign="center";
 	ctx.fillStyle = '#ffffff';
 	ctx.strokeStyle = '#000000';
-	ctx.save();
+	
 	ctx.translate(curShape.x, curShape.y);
 	if(curShape.textSlant){
 		ctx.rotate(Math.atan(curShape.height/curShape.width));
@@ -358,40 +433,41 @@ function drawCard(ctx, curShape){
 	return curShape;
 }
 
-function drawMyCards(){
+function drawMyCards(rowNumber=0,maxCards=10,Cards=myCards,activeCanvas=canvas,maxHightpercent=10){
 	var myCardShapes = [];
-	if (myCards.length > 0){
+	if (Cards.length > 0){
 		var i;
 		var shape = {};
-		var half = Math.floor(myCards.length/2);
-		var spacing = canvas.width/10;
-		var width = Math.min(canvas.height/10, canvas.width/15);
+		var half = Math.floor(Cards.length/2);
+		var spacing = activeCanvas.width/maxCards;
+		var width = Math.min(activeCanvas.height*maxHightpercent/100, activeCanvas.width/(maxCards*1.5));
 		var height = width*1.3;
+		//console.log(spacing,width,height)
 		var text;
 		var fSize;
 		var textSlant;
-		for (i = 0; i <  myCards.length; i += 1) {
-			if( myCards[i].type === 'number' ){
-				text = '' + myCards[i].number;
+		for (i = 0; i <  Cards.length; i += 1) {
+			if( Cards[i].type === 'number' ){
+				text = '' + Cards[i].number;
 				fontSize = width/2;
 				textSlant = false;
 			} else {
-				text = '' + myCards[i].type;
+				text = '' + Cards[i].type;
 				fontSize = Math.sqrt(width*width+height*height)/text.length;
 				textSlant = true;
 			}
-			myCards[i].card = {
-				x: (canvas.width/2) + (i - half + .5)*spacing,
-				y: canvas.height - (height/2) - Math.min(20, (spacing-width)/2),
+			Cards[i].card = {
+				x: (activeCanvas.width/2) + (i - half + .5)*spacing,
+				y: activeCanvas.height - (height/2+height*rowNumber*1.1) - Math.min(20, (spacing-width)/2),
 				width: width,
 				height: height,
-				color: myCards[i].color,
+				color: Cards[i].color,
 				outline: '#000000',
 				text: text,
 				fontSize: fontSize,
 				textSlant: textSlant
 			}	
-			myCardShapes.push(myCards[i].card);
+			myCardShapes.push(Cards[i].card);
 		}
 	}
 	return myCardShapes;
@@ -466,6 +542,7 @@ function drawSelected(radius){
 function resizeCanvas(){
 	canvas.width = window.innerWidth - $('#sidebar').width() - 50;
 	canvas.height = window.innerHeight - $('#bidOverlay').height()- 50;
+	
 	console.log('canvas resized to: ', canvas.width, canvas.height);
 	tableCenter = {x:canvas.width/2,y:canvas.height/2 
 		- Math.min(canvas.height/10, canvas.width/15)*1.3*.5

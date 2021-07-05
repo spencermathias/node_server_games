@@ -14,6 +14,7 @@ body {
   overflow: auto; /* Enable scroll if needed */
   background-color: rgb(0,0,0); /* Fallback color */
   background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  
 }
 
 /* Modal Content */
@@ -25,6 +26,9 @@ body {
   width: 80%;
   height: 80%;
   overflow-y:scroll;
+  font-weight: normal;
+  font-family: "Times New Roman", Times, serif;
+
 }
 
 /* The Close Button */
@@ -62,7 +66,27 @@ body {
 	
 	overflow:hidden;
 }
+#table{
+	table-layout: auto;
+	width: 150px;
+	margin-left: auto;
+	margin-right: auto;
+}
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
 
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+#zeroRoundrules{
+	display:none;
+}
+#cardsInPlay{
+	width:100%
+}
 #middle {
 	height:100vh;
 	display: flex;
