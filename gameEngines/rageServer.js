@@ -76,7 +76,7 @@ function MessageIn(message2server){
 				case 'startGame':startGame(); break;
 				case 'end':gameEnd();break;
 				case 'options':ChangeOptions(data);break
-				case 'getRules': updateUser(playerID,"recievedRules", {maxPlayers,minPlayers,options,currentRound});break
+				case 'getRules': updateUser(playerID,"recievedRules", {maxPlayers,minPlayers,options,rn:roundNumber});break
 			}
 		}else{
 			console.log('gameStatus',gameStatus)
@@ -126,6 +126,7 @@ var currentTurn = 0;
 var firstPlayer;
 var nextToLeadHand;
 var nextToLeadRound;
+var roundNumber="undefined"
 var options={
 	cardsForRounds:[10,9,8,7,6,5,4,3,2,1,0],
 	cardDesc : {
@@ -361,13 +362,16 @@ function renameUser(player,userName) {
     };
 
 function ChangeOptions(data){
-	let roundnums=data.cardsForRounds.map(x=>(parseInt(x)+11)%11)
-	//check round numbers
-	if(roundnums.length === data.cardsForRounds.length && roundnums.every((value, index) => value === data.cardsForRounds[index])){
-		options.cardsForRounds=data.cardsForRounds
-		messageOut('all','Rounds will now be '+options.cardsForRounds, gameColor)
-	}else{
-		console.log('{rage}','round numbers are not valid')
+	let roundnums=[]
+	if(data.cardsForRounds){
+		roundnums=data.cardsForRounds.map(x=>(parseInt(x)+11)%11)
+		//check round numbers
+		if(roundnums.length === data.cardsForRounds.length && roundnums.every((value, index) => value === data.cardsForRounds[index])){
+			options.cardsForRounds=data.cardsForRounds
+			messageOut('all','Rounds will now be '+options.cardsForRounds, gameColor)
+		}else{
+			console.log('{rage}','round numbers are not valid')
+		}
 	}
 	//check card options
 	if(data.cardOptions!=undefined){//this is to validate card options 

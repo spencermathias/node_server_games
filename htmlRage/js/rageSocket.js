@@ -88,12 +88,96 @@ window.onclick = function(event) {
 var optionsEditor = document.getElementById("optionsEditor");
 var adjustBtn=document.getElementById("changeRule");
 adjustBtn.onclick=function(event){
-	event.stopPropagation()
 	modal.style.display = "none";
 	optionsEditor.style.display= "block"
-	
+	$("#numCardTable > tbody").empty();
+	let tableString=""
+	let show0round=false
+	for(let i=0;i<options.options.cardsForRounds.length;i++){
+		if(i>options.rn | options.rn!=undefined){
+			tableString+="<tr><td><input type='checkbox' name='record'></input></td><td>"+i+"</td><td><input type='number' max=10 min=0  value="+options.options.cardsForRounds[i]+"></input></td></tr>"
+		}else{
+			tableString+="<tr><td></td><td>"+i+"</td><td>"+options.options.cardsForRounds[i]+"</td></tr>"
+		}
+	}
+	$('#numCardTable > tbody:last-child').append(tableString);
+	$("#colorCardTable > tbody").empty();
+	tableString=""
+	for(let i=0;i<options.options.cardDesc.colors.length;i++){
+		tableString+="<tr><td><input type='checkbox' name='record'></input></td><td><input type='color' value="+options.options.cardDesc.colors[i]+"></input></td></tr>"
+	}
+	$('#colorCardTable > tbody:last-child').append(tableString);
 }
 function stopclick(event){event.stopPropagation()}
+function verifycolor(htcolor){
+	
+	let c256=htcolor.value.match(/[A-Za-z0-9]{2}/g).map(function(v) { return parseInt(v, 16) })
+	color="#"
+	for( c of c256){
+		c=Math.round(c/51)*51
+		a=c.toString(16)
+		if ((a.length % 2) > 0) {
+			a = "0" + a;
+		}
+		color+=a
+	}
+	htcolor.value=color
+	
+}
+function removeRow(tableName){
+	let removed=false
+	let i=0
+	$("#"+tableName.id).find('input[name="record"]').each(function(){
+		if($(this).is(":checked")){
+			$(this).parents("tr").remove();
+			removed=true
+			i--
+		}else if(removed && $(this).parents("tr").children().length==3){
+			$(this).parents("tr").children()[1].innerHTML=i
+		}
+		i++
+		
+	});
+}
+function addRoundRow(){
+	let lastrow=$("#numCardTable").children()[1].lastChild
+	let i=parseInt(lastrow.children[1].innerHTML)+1
+	let htmltext="<td><input type='checkbox' name='record'/></td><td>"+i+"</td><td><input type='number' max=10 min=0 value="+$('#rn').val()+"></input></td>"
+	lastrow.parentElement.insertRow(-1).innerHTML=htmltext
+}
+function addColorRow(){
+	let lastrow=$("#colorCardTable").children()[1].lastChild
+	let htmltext="<td><input type='checkbox' name='record'></input></td><td><input type='color' value="+$('#newCardColor').val()+"></input></td>"
+	lastrow.parentElement.insertRow(-1).innerHTML=htmltext
+}
+function onChangefunct(name){
+	changedvalues[name]=true
+}
+function sendOptions(){
+	let data={}
+	if(changedvalues["cardsForRounds"]){
+		let cardRounds=[]
+		$('#numCardTable > tbody').children().each(function(){
+			cardRounds.push(parseInt($(this).children().find("input")[1].value))
+		})
+		data["cardsForRounds"]=cardRounds
+	}
+	if(changedvalues["colors"]){
+		let cardcolors=[]
+		$('#colorCardTable > tbody').children().each(function(){
+			cardcolors.push($(this).children().find("input")[1].value)
+		})
+		data["cardOptions"]={colors:cardcolors}
+	}
+	if(changedvalues["numPerSuit"]){
+		data["cardOptions"]={...data["cardOptions"],numPerSuit:parseInt($('#numPerSuit').val())+1}
+	}
+	console.log(data)
+	//data={cardsForRounds:[10,9,8,7,6,5,4,3,2,1,0],cardOptions:{colors:["#990000","#990099", "#009900","#ffff00","#000099","#009999"],numPerSuit:16}}
+	socket.emit('gameCommands',{command:'options',data})
+	changedvalues={cardsForRounds:false,colors:false,numPerSuit:false}
+	closeModal()
+}
 
 /*Initializing the connection with the server via websockets */
 var myCards = [];
@@ -106,7 +190,8 @@ var spectatorColor = "#444444";
 var noneCard = {type: "none", owner: "none", color: "#ffffff", number: -2, ID: 0};
 var zeroRound=false
 var InputList;
-var currentRound=undefined
+var options={}
+var changedvalues={cardsForRounds:false,colors:false,numPerSuit:false}
 
 function updatepublic(data){
 	var userListString = '';
@@ -191,6 +276,7 @@ socket.on('playerLeadsRound', function(playerLeads){
 	resizeCanvas();
 });
 socket.on('recievedRules', function(data){
+	options=data
 	//change number of players
 	$('#playercount').text(''+data.minPlayers+'-'+data.maxPlayers)
 	//show example cards
@@ -228,12 +314,13 @@ socket.on('recievedRules', function(data){
 	let tableString=""
 	let show0round=false
 	for(let i=0;i<data.options.cardsForRounds.length;i++){
-		tableString+="<tr><td>"+i+"</td><td>"+data.options.cardsForRounds[i]+"</td></tr>"
+			tableString+="<tr><td>"+i+"</td><td>"+data.options.cardsForRounds[i]+"</td></tr>"
 		if(data.options.cardsForRounds[i]==0){
 			show0round=true
 		}
 	}
 	$('#myTable > tbody:last-child').append(tableString);
+	$('#myTable > tbody > tr').eq(options.rn).css("background","yellow");
 	if(show0round){
 		$('#zeroRoundrules').css('display', 'flex')
 	}else{

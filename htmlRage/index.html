@@ -63,15 +63,40 @@
 							<button id="changeRule">adjust rules</button>
 						</div>
 					</div>
-					<div id="optionsEditor" class="modal" onclick="closeModal">
+					<div id="optionsEditor" class="modal" onclick="closeModal()">
 						<div class="modal-content" onclick="stopclick(event)">
 							<span class="close" onclick="closeModal()">&times;</span>
 							<p><b>Options</b></p>
 							<p>input the highest number for the deck of cards</p>
-							<input type="number" value=15></input>
-							<p>color</p>
-							<input type ="color"></input>
-							
+							<input type="number" id="numPerSuit" value=15 onchange="onChangefunct('numPerSuit')"/>
+							<p><b>rounds</b></p>
+							<table id="numCardTable" onchange="onChangefunct('cardsForRounds')">
+								<thead>
+									<tr>
+										<th>Select to Delete</th>
+										<th>Round Number</th>
+										<th>Number of cards</th>
+									</tr>
+								</thead>
+								<tbody></tbody>
+							</table>
+							<button onclick="removeRow(numCardTable)">Remove selected Rows</button>
+							<p>add round to end of currrent rounds</p>
+							<p>number of cards in round to be added<input type="number" id="rn"></input> <button id="addRound" onclick="addRoundRow()"> add </button>
+							<p>card colors</p>
+							<table id="colorCardTable" onchange="onChangefunct('colors')">
+								<thead>
+									<tr>
+										<th>Select to Delete</th>
+										<th>pick color</th>
+									</tr>
+								</thead>
+								<tbody></tbody>
+							</table>
+							<button onclick="removeRow(colorCardTable)">Remove selected Rows</button>
+							<p>Color of cards to be added<input type="color" value="#aaaaaa" id='newCardColor'></input> <button id="addcolor" onclick="addColorRow()"> add </button>
+							<p>When finished editing click submit to change the settings for the next round</p>
+							<button id=submitOptions onclick="sendOptions()">submit</button>
 						</div>
 					</div>
 					<div id='bidOverlay'>
