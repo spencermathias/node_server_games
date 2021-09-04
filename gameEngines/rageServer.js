@@ -130,7 +130,7 @@ var roundNumber="undefined"
 var options={
 	cardsForRounds:[10,9,8,7,6,5,4,3,2,1,0],
 	cardDesc : {
-		colors: ["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#FF8C00", "#ff00ff"],
+		colors: ["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#FF8C00", "#A510A5"],
 				  //red       green       blue     yellow      orange     purple
 		numPerSuit: 16,
 		wordCardColor: "#000000",
