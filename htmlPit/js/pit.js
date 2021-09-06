@@ -10,6 +10,8 @@
 
 //events
 
+var publicAddress = 'localhost:8080/';
+var internalAddress = 'localhost:8080/';
 
 window.addEventListener('load', function() {
 	var lastTouch = {x:0, y:0};
@@ -50,7 +52,7 @@ window.addEventListener('load', function() {
 
 $('#submit').click(function(){
 	var data = {
-		message:$('#message').val()         
+		message:$('#message').val(),
 	}
 	socket.send(JSON.stringify(data)); 
 	$('#message').val('');
@@ -62,10 +64,10 @@ function titleFunction(){
 	let title = document.getElementById('title')
 	if ( title.style.color == 'rgb(255, 0, 0)' ){
 		title.style.color = '#00ff00';
-		socket.emit('gameCommands',{command:'ready', data:{ready: true}});
+		socket.emit('ready', {ready: true});
 	} else {
 		title.style.color = '#ff0000';
-		socket.emit('gameCommands',{command:'ready', data:{ready: false}});
+		socket.emit('ready', {ready: false});
 	}
 	return false;
 }
@@ -167,7 +169,7 @@ class Tile extends Button{
 		if(tileData != undefined){
 			this.text = this.tileData.products.name;
 			this.visible = (this.text.length >= 0);*/
-		//
+		//}
 		console.log(this.cardNumber,'new',cardNumber);
 		this.text = allTiles.getProperties(cardNumber).products.name;
 		this.visible = (this.text.length >= 0);
@@ -241,14 +243,15 @@ class tradeButton extends Tile{
 			for (let i = 0;i < playerTradeMatrix[this.userNumber].length;i++){
 				let trade = playerTradeMatrix[this.userNumber][i];
 				console.log(trade,this.placeNumber + 1);
-				this.visible =(trade.length == this.placeNumber + 1);
+				if(trade.length == this.placeNumber + 1){this.visible = true;}
+				//console.log(this.visible);
 			}
 		}
 	}
 	
 	click(){
 		console.log('tradeButton',this.userNumber,this.placeNumber);
-		socket.emit('gameCommands',{command:'tradeReady',data:this.userNumber});
+		socket.emit('tradeReady',this.userNumber,this.placeNumber);
 	}
 }
 
@@ -260,9 +263,7 @@ class bidButton extends Tile{
 	}
 	
 	checkVisibility(){
-		if(userList[this.userNumber]){
-			this.visible = userList[this.userNumber].bids[this.placeNumber]>0;
-		}
+		this.visible = userList[this.userNumber].bids[this.placeNumber]>0;
 	}
 	
 	click(){
@@ -270,7 +271,7 @@ class bidButton extends Tile{
 		let cardSelection = checkCardSelection();
 		if (cardSelection != undefined){
 			if (cardSelection.length == this.placeNumber + 1){
-				socket.emit('gameCommands',{command:'attemptTrade',data:{cards:cardSelection,num:this.userNumber}});
+				socket.emit('attemptTrade',cardSelection,this.userNumber);
 			}
 			else console.log('number of selected cards is not correct');
 		}
@@ -326,24 +327,24 @@ class BiddingInterface{
 			ctx.translate(canvas.width/2,this.y);
 			//if(this.textSlant){
 			//	ctx.rotate(Math.atan(this.height/this.width));
-			//
+			//}
 			ctx.fillText(this.user.userName,0,0);
 			//var nameWidth = ctx.measureText(user.userName).width;
 			//if(this.textOutline != undefined){
 				//ctx.strokeText(this.text, 0, 0);
-			//
+			//}
 			ctx.restore();
 			/*var x = (canvas.width/2)-(nameWidth/2)-(textsize/2)-(textsize*7);
 			for (var i = 1; i <= 4; i++){
 				shapes[0].push(new Button(x,y,textsize,textsize,i,'LightSeaGreen','#000000','#000000','#000000',textsize/2,false));
 				x += textsize*2;
-			
+			}
 			var x = (canvas.width/2)+(nameWidth/2)+(textsize/2)+(textsize*1);
 			for (var i = 1; i <= 4; i++){
 				shapes[0].push(new Button(x,y,textsize,textsize,i,'#8888ff','#000000','#000000','#000000',textsize/2,false));
 				x += textsize*2;
-			*/
-		//;
+			}*/
+		//});
 	}
 }
 
@@ -354,14 +355,14 @@ class SubmitButton extends Button{
 	}
 	click(){
 		if (tilesSelected == 0){
-			socket.emit('gameCommands',{command:'checkEndOfRound'});
+			socket.emit('cheakEndOfRound');
 		}
 		else{
 			if(this.visible){
 				let sendCards = checkCardSelection();
 				console.log(sendCards);
 				if (sendCards != undefined){
-					socket.emit('gameCommands',{command:'submitedBidTiles',data:sendCards});
+					socket.emit('submitedBidTiles',sendCards);
 				}
 			}
 		}
@@ -416,9 +417,10 @@ function checkCardSelection(){
 			if (type == undefined){
 				type = t.text;
 				sendCards.push(t.cardNumber);
-			}else if(t.text == type){
+			}else if(t.text == type || t.text == 'bull'){
 				sendCards.push(t.cardNumber);//TODO:include bull and bear
 			}else{
+				socket.emit('cardsNotMatching');
 				throw mismatchedCardsError;
 			}
 		}
@@ -546,32 +548,45 @@ class Board {
 
 //socket stuff
 
-var socket = io(window.location.href);  //try public address //"24.42.206.240" for alabama
+var socket = io(publicAddress); //try public address //"24.42.206.240" for alabama
 
 var trylocal = 0;
-socket.on('connect', () => {
-    //socket.emit('gameCommands',{command:'addPlayer'});
-	console.log("Connection successful!")
+socket.on('connect_error',function(error){
+	console.log("I got an error!", error);
+	console.log("socket to:", socket.disconnect().io.uri, "has been closed.");
+	if(!trylocal){ //prevent loops
+		if(window.location.href != internalAddress){
+			window.location.replace(internalAddress);
+		}
+		socket.io.uri = internalAddress;
+		console.log("Switching to local url:", socket.io.uri);
+		console.log("Connecting to:",socket.connect().io.uri);
+		trylocal = 1;
+	}
 });
 
-socket.on('getOldID',(callBack)=>{
+socket.on('reconnect', function(attempt){
+	console.log("reconnect attempt number:", attempt);
+});
+
+socket.on('connect', function(){
+	//get userName
+	console.log("Connection successful!");
+	if(localStorage.userName === undefined){
+		changeName(socket.id);
+	} else {
+		socket.emit('userName', localStorage.userName);
+	}
+	
 	if(localStorage.id !== undefined){
-		console.log(localStorage)
-		callBack({ID:localStorage.id,name:localStorage.userName})
+		socket.emit('oldId', localStorage.id);
 	}
 	localStorage.id = socket.id;
-	socket.emit('gameCommands',{command:'addPlayer',data:localStorage.userName});
-})
-socket.on('forward to room',(path)=>{
-	console.log('move to path:',path)
-	window.location.href=path
-})
-socket.on('allTiles', function(inAllTiles){
-	allTiles = inAllTiles;
+	changeBid(true);
 });
 
 socket.on('tradeMatrix',(tradeMatrix)=>{
-	console.log(playerTradeMatrix,'hi');
+	console.log(tradeMatrix,'hi');
 	playerTradeMatrix = tradeMatrix;
 	tradingUi.forEach((i)=>{
 		i.updateVisibility();
@@ -582,6 +597,13 @@ socket.on('allTiles', function(inAllTiles){
 	allTiles = inAllTiles;
 });
 
+socket.on('#ofPlayers',function(playerAmount){
+	let discription = shared.cardDes;
+	discription.products = discription.products.slice(0,playerAmount);
+	discription.products.push({name:'bull',value:20},{name:'bear',value:-20});
+	allTiles = new Deck(discription);
+});
+
 socket.on('startGame',()=>{
 	console.log(userList);
 	var textsize = 40;
@@ -589,10 +611,36 @@ socket.on('startGame',()=>{
 	userList.forEach((userName,i)=> {
 		if (userName.ready){
 			tradingUi.push(new BiddingInterface(i,y,textsize));
-		}	
+		}
 		y += textsize*1.5;
 	});
+	
+	for (var i = 0;i < 10;i++){
+		var tile = new Tile(
+			(canvas.width/2) + (tileWidth + 20) * (i-2),
+			canvas.height - (tileHeight + 20),
+			tileWidth,
+			tileHeight,
+			'',
+			newTileColor,'#000000','#000000','#000000',
+			20,true
+		);
+	//tile.drawOutline(placeholderColor); //placeholder outline
+		myTiles.push(tile);
+	}
+	
+	pushProprites();
 });
+
+function changeBid(isReloaded){
+	if(localStorage.bid == undefined || !isReloaded){
+		var myBid = prompt('Enter what score you want to play to. Please make it no greater than 500.');
+		if(parseInt(myBid) >= 0){
+			socket.emit('newBidForScoreToWinTheGame',myBid);
+			localStorage.bid = myBid;
+		}
+	}
+}
 
 function changeName(userId){
 	if(userId == socket.id){
@@ -609,6 +657,13 @@ function changeName(userId){
 	}
 }
 
+function pushProprites(){
+	for(let x = 0; x < userList.length; x++){
+		let y = shared.cardDes.products[x].name;
+		let z = shared.cardDes.products[x].value;
+		$('#proprites').append('<li style="color:#ff0088">' + y + ' ' + z + '</li>');
+	}
+}
 /*Initializing the connection with the server via websockets */
 var myTiles = [];
 var playerTradeMatrix = [];
@@ -630,20 +685,9 @@ var newServerTileColor = '#aae0b3';
 var myTurn = false;
 var myUserlistIndex = 0;
 var myUserlistString = "";
+var myBid = undefined;
 
-for (var i = 0;i < 10;i++){
-	var tile = new Tile(
-		(canvas.width/2) + (tileWidth + 20) * (i-2),
-		canvas.height - (tileHeight + 20),
-		tileWidth,
-		tileHeight,
-		'',
-		newTileColor,'#000000','#000000','#000000',
-		20,true
-	);
-	//tile.drawOutline(placeholderColor); //placeholder outline
-	myTiles.push(tile);
-}
+
 socket.on("message",function(message){  
 	/*
 		When server sends data to the client it will trigger "message" event on the client side , by 
@@ -702,6 +746,7 @@ socket.on('showBoard',function(data){
 });
 
 socket.on('tiles', function(tiles){
+	console.log(tiles);
 	serverTiles = tiles;
 	
 	for(var i = 0; i < tiles.length; i++){
@@ -743,6 +788,7 @@ socket.on('gameEnd',()=>{
 		delete t;
 	});
 	myTiles = [];
+	$('#proprites').empty();
 });
 
 function updatePlayValidity(){
@@ -836,7 +882,7 @@ function draw(){
 	setTimeout(draw, 100); //repeat
 }
 
-draw();
+
 
 function resizeCanvas(){
 	canvas.width = window.innerWidth - $('#sidebar').width() - 50;
@@ -928,3 +974,5 @@ function polygon(ctx, x, y, radius, sides, startAngle, anticlockwise) {
 	ctx.closePath();
 	ctx.restore();
 }
+
+draw();
