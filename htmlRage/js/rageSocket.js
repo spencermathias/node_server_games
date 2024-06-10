@@ -201,7 +201,8 @@ function updatepublic(data){
 		var header = 'div id="userListDiv'+ i + '"';
 		var click = 'onclick="changeName(' + "'" + data[i].id + "'" + ')"';
 		var color = ' style="color: ' + data[i].color + ';"'
-		var string = '' + data[i].userName;
+		var string = showBid?''+data[i].bid+'/'+data.handsWon: '0/█';
+		string +=  "..." + data[i].userName + " : " + data[i].score;
 		var ender = '</div>';
 		
 		userListString = userListString + '<' + header + click + color + '>' + string + ender;
