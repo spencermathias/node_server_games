@@ -420,7 +420,7 @@ function draw(){
 	//table
 	ctx.fillStyle = '#777777';
 	ctx.strokeStyle = '#000000';
-	var radius = (Math.min(canvas.width, canvas.height-60)/2)-20;
+	var radius = (Math.min(canvas.width, canvas.height-60)/2)-50;
 	var angle = (2*Math.PI)/Math.max(4,userList.length)
 	polygon(
 		ctx, 
