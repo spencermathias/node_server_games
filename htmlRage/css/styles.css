@@ -1,3 +1,7 @@
+html {
+	overscroll-behavior:none;
+}
+
 body {
 	height:100%;
 }
@@ -92,12 +96,13 @@ tr:nth-child(even) {
 	flex: 1;
 	display: flex;
 	flex-direction: row;
+	max-height:100%;
 }
 
 #gameAndOverlay{
 	display: flex;
 	flex-direction: column;
-	width:80%;
+	flex:8;
 	position:relative;
 }
 
@@ -112,13 +117,16 @@ tr:nth-child(even) {
 
 #gameBoard {
 	display: none; /* none */
+	flex:1;
+	width:100%;
+	height:100%;
 	/* cursor: default; */
 	/* border:1px solid #ffffff; */
 }
 
 #sidebar {
 	/* border: 1px solid #00aa00; */
-	width: 20%;
+	flex:2;
 	/* min-width: 200px; */
 	padding: 5px;
 	color: #FFFFFF;
