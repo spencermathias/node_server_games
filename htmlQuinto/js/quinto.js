@@ -34,8 +34,8 @@ window.addEventListener('load', function() {
 		return;
 	}
 
-  document.addEventListener('touchstart', touchstartHandler, {passive: false });
-  document.addEventListener('touchmove', touchmoveHandler, {passive: false });
+  document.getElementById('gameBoard').addEventListener('touchstart', touchstartHandler, {passive: false });
+  document.getElementById('gameBoard').addEventListener('touchmove', touchmoveHandler, {passive: false });
   console.log('added');
   document.getElementById('gameBoard').addEventListener('click', checkClick);
   document.getElementById('title').addEventListener('click', titleFunction);
@@ -592,8 +592,8 @@ function draw(){
 draw();
 
 function resizeCanvas(){
-	canvas.width = window.innerWidth - $('#sidebar').width() - 50;
-	canvas.height = window.innerHeight - 2;
+	canvas.width = canvas.parentElement.scrollWidth; //window.innerWidth - $('#sidebar').width() - 50;
+	canvas.height = canvas.parentElement.scrollHeight; //window.innerHeight - $('#bidOverlay').height()- 50;
 	console.log('canvas resized to: ', canvas.width, canvas.height);
 	resizeDrawings();
 }

@@ -420,7 +420,7 @@ function draw(){
 	//table
 	ctx.fillStyle = '#777777';
 	ctx.strokeStyle = '#000000';
-	var radius = (Math.min(canvas.width, canvas.height-140)/2)-50;
+	var radius = (Math.min(canvas.width, canvas.height-60)/2)-50;
 	var angle = (2*Math.PI)/Math.max(4,userList.length)
 	polygon(
 		ctx, 
@@ -628,8 +628,8 @@ function drawSelected(radius){
 }
 
 function resizeCanvas(){
-	canvas.width = window.innerWidth - $('#sidebar').width() - 50;
-	canvas.height = window.innerHeight - $('#bidOverlay').height()- 50;
+	canvas.width = canvas.parentElement.scrollWidth; //window.innerWidth - $('#sidebar').width() - 50;
+	canvas.height = canvas.parentElement.scrollHeight; //window.innerHeight - $('#bidOverlay').height()- 50;
 	
 	console.log('canvas resized to: ', canvas.width, canvas.height);
 	tableCenter = {x:canvas.width/2,y:canvas.height/2 
